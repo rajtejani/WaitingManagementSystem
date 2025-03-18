@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AppSettings, DailyStats, Guest } from '../types';
+import RNFS from "react-native-fs";
+import { STORAGE_FILE_PATH } from "../config/storage";
 
 interface AppContextType {
   guests: Guest[];
@@ -10,9 +12,9 @@ interface AppContextType {
   settings: AppSettings;
   estimatedWaitingTime: number;
   addGuest: (
-    guest: Omit<Guest, 'id' | 'registeredAt' | 'status' | 'waitingTime'>
+    guest: Omit<Guest, "id" | "registeredAt" | "status" | "waitingTime">
   ) => Promise<void>;
-  updateGuestStatus: (id: string, status: Guest['status']) => Promise<void>;
+  updateGuestStatus: (id: string, status: Guest["status"]) => Promise<void>;
   getDailyStats: (date: string) => DailyStats | undefined;
   updateSettings: (settings: AppSettings) => Promise<void>;
   inLineGuests: string[];
@@ -34,11 +36,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [inLineGuests, setInLineGuests] = useState<string[]>([]);
 
+  console.log("Guests:", guests);
   // Calculated properties
-  const waitingGuests = guests.filter((guest) => guest.status === 'waiting');
-  const completedGuests = guests.filter((guest) => guest.status !== 'waiting');
+  const waitingGuests = guests.filter((guest) => guest.status === "waiting");
+  const completedGuests = guests.filter((guest) => guest.status !== "waiting");
 
-  // Calculate estimated waiting time based on settings and current waitlist
+  // Calculate estimated waiting time based on settings and current waitList
   const estimatedWaitingTime = Math.max(
     Math.ceil(
       (waitingGuests.length / settings.totalTables) *
@@ -49,12 +52,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const loadInLineGuests = async () => {
       try {
-        const storedInLineGuests = await AsyncStorage.getItem('inLineGuests');
+        const storedInLineGuests = await AsyncStorage.getItem("inLineGuests");
         if (storedInLineGuests) {
           setInLineGuests(JSON.parse(storedInLineGuests));
         }
       } catch (error) {
-        console.error('Error loading inLineGuests:', error);
+        console.error("Error loading inLineGuests:", error);
       }
     };
     loadInLineGuests();
@@ -64,29 +67,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const saveInLineGuests = async () => {
       try {
         await AsyncStorage.setItem(
-          'inLineGuests',
+          "inLineGuests",
           JSON.stringify(inLineGuests)
         );
       } catch (error) {
-        console.error('Error saving inLineGuests:', error);
+        console.error("Error saving inLineGuests:", error);
       }
     };
     saveInLineGuests();
   }, [inLineGuests]);
 
-  // Load data from AsyncStorage on app start
   useEffect(() => {
+    // Load data from AsyncStorage on app start
+    //   const loadData = async () => {
+    //     try {
+    //       const guestsData = await AsyncStorage.getItem('guests');
+    //       const statsData = await AsyncStorage.getItem('dailyStats');
+    //       const settingsData = await AsyncStorage.getItem('settings');
+    //       if (guestsData) {setGuests(JSON.parse(guestsData));}
+    //       if (statsData) {setDailyStats(JSON.parse(statsData));}
+    //       if (settingsData) {setSettings(JSON.parse(settingsData));}
+    //     } catch (error) {
+    //       console.error('Error loading data from storage:', error);
+    //     }
+    //   };
+    //   loadData();
     const loadData = async () => {
       try {
-        const guestsData = await AsyncStorage.getItem('guests');
-        const statsData = await AsyncStorage.getItem('dailyStats');
-        const settingsData = await AsyncStorage.getItem('settings');
-
-        if (guestsData) {setGuests(JSON.parse(guestsData));}
-        if (statsData) {setDailyStats(JSON.parse(statsData));}
-        if (settingsData) {setSettings(JSON.parse(settingsData));}
+        const fileExists = await RNFS.exists(STORAGE_FILE_PATH);
+        if (fileExists) {
+          const fileContents = await RNFS.readFile(STORAGE_FILE_PATH, "utf8");
+          console.log("File contents:", fileContents);
+          const parsedData = JSON.parse(fileContents);
+          setGuests(parsedData);
+        } else {
+          console.log("No file found, initializing empty guest list.");
+          setGuests([]);
+        }
       } catch (error) {
-        console.error('Error loading data from storage:', error);
+        console.error("Error loading data from file:", error);
       }
     };
 
@@ -95,14 +114,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Save guests data when it changes
   useEffect(() => {
+    // const saveGuests = async () => {
+    //   try {
+    //     await AsyncStorage.setItem("guests", JSON.stringify(guests));
+    //   } catch (error) {
+    //     console.error("Error saving guests data:", error);
+    //   }
+    // };
+
     const saveGuests = async () => {
       try {
-        await AsyncStorage.setItem('guests', JSON.stringify(guests));
+        await RNFS.writeFile(STORAGE_FILE_PATH, JSON.stringify(guests), "utf8");
+        console.log("Guests saved to file:", guests);
       } catch (error) {
-        console.error('Error saving guests data:', error);
+        console.error("Error saving guests to file:", error);
       }
     };
-
     if (guests.length > 0) {
       saveGuests();
     }
@@ -110,14 +137,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Add a new guest to the waiting list
   const addGuest = async (
-    guestData: Omit<Guest, 'id' | 'registeredAt' | 'status' | 'waitingTime'>
+    guestData: Omit<Guest, "id" | "registeredAt" | "status" | "waitingTime">
   ) => {
     const now = new Date();
     const newGuest: Guest = {
       id: Date.now().toString(),
       ...guestData,
       registeredAt: now.toISOString(),
-      status: 'waiting',
+      status: "waiting",
       waitingTime: estimatedWaitingTime,
     };
 
@@ -125,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Update a guest's status
-  const updateGuestStatus = async (id: string, status: Guest['status']) => {
+  const updateGuestStatus = async (id: string, status: Guest["status"]) => {
     const now = new Date();
     const updatedGuests = guests.map((guest) =>
       guest.id === id
@@ -133,7 +160,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
             ...guest,
             status,
             processedAt:
-              status !== 'waiting' ? now.toISOString() : guest.processedAt,
+              status !== "waiting" ? now.toISOString() : guest.processedAt,
           }
         : guest
     );
@@ -141,10 +168,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     setGuests(updatedGuests);
 
     // Update daily stats if guest is seated
-    if (status === 'seated') {
+    if (status === "seated") {
       const guest = guests.find((g) => g.id === id);
       if (guest) {
-        const today = now.toISOString().split('T')[0];
+        const today = now.toISOString().split("T")[0];
         updateDailyStats(today, guest);
       }
     }
@@ -167,7 +194,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       setDailyStats(updatedStats);
-      await AsyncStorage.setItem('dailyStats', JSON.stringify(updatedStats));
+      await AsyncStorage.setItem("dailyStats", JSON.stringify(updatedStats));
     } else {
       const newStat: DailyStats = {
         date,
@@ -178,7 +205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setDailyStats((prev) => [...prev, newStat]);
       await AsyncStorage.setItem(
-        'dailyStats',
+        "dailyStats",
         JSON.stringify([...dailyStats, newStat])
       );
     }
@@ -192,7 +219,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Update app settings
   const updateSettings = async (newSettings: AppSettings) => {
     setSettings(newSettings);
-    await AsyncStorage.setItem('settings', JSON.stringify(newSettings));
+    await AsyncStorage.setItem("settings", JSON.stringify(newSettings));
   };
 
   return (
