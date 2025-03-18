@@ -1,34 +1,112 @@
 // screens/HomeScreen.tsx
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useAppContext } from '../Context/AppContext';
-import AddGuestModal from '../components/AddGuestModal';
-import Badge from '../components/Badge';
-import CompletedList from '../components/CompletedList';
-import WaitingList from '../components/WaitingList';
-
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { useAppContext } from "../Context/AppContext";
+import AddGuestModal from "../components/AddGuestModal";
+import Badge from "../components/Badge";
+import CompletedList from "../components/CompletedList";
+import RNFS, { DocumentDirectoryPath } from "react-native-fs";
+import WaitingList from "../components/WaitingList";
+interface GuestData {
+  waitingGuests: any[];
+  completedGuests: any[];
+}
 const HomeScreen = () => {
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>(
-    'upcoming'
+  const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
+    "upcoming"
   );
   const [isAddModalVisible, setAddModalVisible] = useState(false);
-  const {  waitingGuests, completedGuests } =
-    useAppContext();
+  const [guest, setGuests] = useState<GuestData>({
+    waitingGuests: [],
+    completedGuests: [],
+  });
+  const { waitingGuests, completedGuests } = useAppContext();
   const upcomingGuestsCount = waitingGuests.filter(
     (guest) => guest.status
   ).length;
   const completedGuestsCount = completedGuests.filter(
     (guest) => guest.status
   ).length;
+  const readFile = async () => {
+    try {
+      const dirPath = `${DocumentDirectoryPath}/RestaurantData`;
+      const dirExists = await RNFS.exists(dirPath);
+
+      if (!dirExists) {
+        await RNFS.mkdir(dirPath);
+        console.log("Created RestaurantData directory");
+      }
+
+      const filePath = `${dirPath}/guestData.txt`;
+      const fileExists = await RNFS.exists(filePath);
+
+      if (fileExists) {
+        const contents = await RNFS.readFile(filePath, "utf8");
+        console.log("Successfully read file:", contents);
+        return contents;
+      } else {
+        console.log("File doesn't exist yet, will create on first write");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error reading file:", error);
+      return null;
+    }
+  };
+
+  const writeFile = async (data: string) => {
+    try {
+      const dirPath = `${DocumentDirectoryPath}/RestaurantData`;
+      const dirExists = await RNFS.exists(dirPath);
+
+      if (!dirExists) {
+        await RNFS.mkdir(dirPath);
+      }
+
+      const filePath = `${dirPath}/guestData.txt`;
+      await RNFS.writeFile(filePath, data, "utf8");
+      console.log("File written successfully at:", filePath);
+      return true;
+    } catch (error) {
+      console.error("Error writing file:", error);
+      Alert.alert("Storage Error", "Failed to save data. Please try again.");
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    // Load data on initial mount
+    const loadData = async () => {
+      const data = await readFile();
+      if (data) {
+        try {
+          const parsedData = JSON.parse(data);
+          setGuests(parsedData);
+        } catch (e) {
+          console.error("Error parsing stored data:", e);
+        }
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Added another useEffect to save data when it changes
+  useEffect(() => {
+    // Only save if we have data to save (prevents saving empty data on initial mount)
+    if (waitingGuests.length > 0 || completedGuests.length > 0) {
+      writeFile(JSON.stringify({ waitingGuests, completedGuests }));
+    }
+  }, [waitingGuests, completedGuests]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>
-            {activeTab === 'upcoming' ? 'Waiting List' : 'Completed List'}
+            {activeTab === "upcoming" ? "Waiting List" : "Completed List"}
           </Text>
           <TouchableOpacity
             style={styles.addButton}
@@ -38,24 +116,15 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* {activeTab === "upcoming" && (
-          <View style={styles.waitingTimeContainer}>
-            <Text style={styles.waitingTimeLabel}>Waiting Time</Text>
-            <Text style={styles.waitingTimeValue}>
-              {estimatedWaitingTime} Mins
-            </Text>
-          </View>
-        )} */}
-
         <View style={styles.tabContainer}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
-            onPress={() => setActiveTab('upcoming')}
+            style={[styles.tab, activeTab === "upcoming" && styles.activeTab]}
+            onPress={() => setActiveTab("upcoming")}
           >
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'upcoming' && styles.activeTabText,
+                activeTab === "upcoming" && styles.activeTabText,
               ]}
             >
               Upcoming
@@ -63,13 +132,13 @@ const HomeScreen = () => {
             <Badge count={upcomingGuestsCount} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
-            onPress={() => setActiveTab('completed')}
+            style={[styles.tab, activeTab === "completed" && styles.activeTab]}
+            onPress={() => setActiveTab("completed")}
           >
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'completed' && styles.activeTabText,
+                activeTab === "completed" && styles.activeTabText,
               ]}
             >
               Completed
@@ -79,7 +148,7 @@ const HomeScreen = () => {
         </View>
 
         <View style={styles.listContainer}>
-          {activeTab === 'upcoming' ? <WaitingList /> : <CompletedList />}
+          {activeTab === "upcoming" ? <WaitingList /> : <CompletedList />}
         </View>
       </View>
 

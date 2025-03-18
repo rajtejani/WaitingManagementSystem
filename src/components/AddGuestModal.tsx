@@ -1,4 +1,3 @@
-import parsePhoneNumber from "libphonenumber-js/max";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 import React, { useState } from "react";
@@ -43,34 +42,16 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
     onClose();
   };
 
-  const validatePhoneNumber = (phone: string): boolean => {
-    const phoneWithCountryCode = phone.startsWith("+") ? phone : `${phone}`;
-    const phoneNumber = parsePhoneNumber(phoneWithCountryCode, "IN");
-    // console.log(phoneNumber?.getType());
-
-    try {
-      if (!phoneNumber?.isValid() || phoneNumber?.getType() !== "MOBILE") {
-        setPhoneError("Please enter a valid phone number");
-        return false;
-      }
-      setPhoneError("");
-      return true;
-    } catch (error) {
-      setPhoneError("Invalid phone number");
-      return false;
-    }
-  };
-
   const handleAddGuest = async () => {
     if (!name.trim()) {
       Alert.alert("Error", "Please enter guest name");
       return;
     }
 
-    if (!validatePhoneNumber(phoneNumber.trim())) {
-      Alert.alert("Error", phoneError || "Invalid phone number");
-      return;
-    }
+    // if (!validatePhoneNumber(phoneNumber.trim())) {
+    //   Alert.alert("Error", phoneError || "Invalid phone number");
+    //   return;
+    // }
     if (!phoneNumber.trim()) {
       Alert.alert("Error", "Please enter guest phone number");
       return;
@@ -100,17 +81,16 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
     // Clear error when user is typing
     if (phoneError) setPhoneError("");
   };
-
+  const handlePhoneBlur = () => {
+    if (phoneNumber.trim().length !== 10) {
+      setPhoneError("Please enter a valid phone number");
+    }
+  };
   const handleGuestCountSelect = (count: number) => {
     setGuestCount(count);
     setNumberOfGuest(count.toString()); // Update numberOfGuest state
     if (count !== 2) {
       setWillingToShare(false);
-    }
-  };
-  const handlePhoneBlur = () => {
-    if (phoneNumber.trim()) {
-      validatePhoneNumber(phoneNumber.trim());
     }
   };
   return (
