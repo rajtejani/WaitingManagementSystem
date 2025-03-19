@@ -1,9 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AppSettings, DailyStats, Guest } from '../types';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { AppSettings, DailyStats, Guest } from "../types";
 import RNFS from "react-native-fs";
-import { STORAGE_FILE_PATH } from "../config/storage";
-
+import { STORAGE_FOLDER_PATH, filePath } from "../config/storage";
+import { PermissionsAndroid } from "react-native";
+interface GuestData {
+  waitingGuests: any[];
+  completedGuests: any[];
+}
 interface AppContextType {
   guests: Guest[];
   waitingGuests: Guest[];
@@ -35,11 +45,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [inLineGuests, setInLineGuests] = useState<string[]>([]);
+  const [localGuestData, setLocalGuestData] = useState<GuestData>({
+    waitingGuests: [],
+    completedGuests: [],
+  });
 
-  console.log("Guests:", guests);
   // Calculated properties
-  const waitingGuests = guests.filter((guest) => guest.status === "waiting");
-  const completedGuests = guests.filter((guest) => guest.status !== "waiting");
+  const waitingGuests = guests
+    ? guests.filter((guest) => guest.status === "waiting")
+    : [];
+  const completedGuests = guests
+    ? guests.filter((guest) => guest.status !== "waiting")
+    : [];
 
   // Calculate estimated waiting time based on settings and current waitList
   const estimatedWaitingTime = Math.max(
@@ -49,91 +66,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     ),
     0
   );
-  useEffect(() => {
-    const loadInLineGuests = async () => {
-      try {
-        const storedInLineGuests = await AsyncStorage.getItem("inLineGuests");
-        if (storedInLineGuests) {
-          setInLineGuests(JSON.parse(storedInLineGuests));
-        }
-      } catch (error) {
-        console.error("Error loading inLineGuests:", error);
+
+  // File operations
+  const readDataFile = useCallback(async () => {
+    try {
+      // Check if the directory exists
+      const exists = await RNFS.exists(filePath);
+      if (!exists) {
+        console.log(`Storage file doesn't exist yet, ${exists}`);
+        // return null;
+        return { waitingGuests: [], completedGuests: [] };
       }
-    };
-    loadInLineGuests();
-  }, []);
 
-  useEffect(() => {
-    const saveInLineGuests = async () => {
-      try {
-        await AsyncStorage.setItem(
-          "inLineGuests",
-          JSON.stringify(inLineGuests)
-        );
-      } catch (error) {
-        console.error("Error saving inLineGuests:", error);
-      }
-    };
-    saveInLineGuests();
-  }, [inLineGuests]);
-
-  useEffect(() => {
-    // Load data from AsyncStorage on app start
-    //   const loadData = async () => {
-    //     try {
-    //       const guestsData = await AsyncStorage.getItem('guests');
-    //       const statsData = await AsyncStorage.getItem('dailyStats');
-    //       const settingsData = await AsyncStorage.getItem('settings');
-    //       if (guestsData) {setGuests(JSON.parse(guestsData));}
-    //       if (statsData) {setDailyStats(JSON.parse(statsData));}
-    //       if (settingsData) {setSettings(JSON.parse(settingsData));}
-    //     } catch (error) {
-    //       console.error('Error loading data from storage:', error);
-    //     }
-    //   };
-    //   loadData();
-    const loadData = async () => {
-      try {
-        const fileExists = await RNFS.exists(STORAGE_FILE_PATH);
-        if (fileExists) {
-          const fileContents = await RNFS.readFile(STORAGE_FILE_PATH, "utf8");
-          console.log("File contents:", fileContents);
-          const parsedData = JSON.parse(fileContents);
-          setGuests(parsedData);
-        } else {
-          console.log("No file found, initializing empty guest list.");
-          setGuests([]);
-        }
-      } catch (error) {
-        console.error("Error loading data from file:", error);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Save guests data when it changes
-  useEffect(() => {
-    // const saveGuests = async () => {
-    //   try {
-    //     await AsyncStorage.setItem("guests", JSON.stringify(guests));
-    //   } catch (error) {
-    //     console.error("Error saving guests data:", error);
-    //   }
-    // };
-
-    const saveGuests = async () => {
-      try {
-        await RNFS.writeFile(STORAGE_FILE_PATH, JSON.stringify(guests), "utf8");
-        console.log("Guests saved to file:", guests);
-      } catch (error) {
-        console.error("Error saving guests to file:", error);
-      }
-    };
-    if (guests.length > 0) {
-      saveGuests();
+      const contents = await RNFS.readFile(filePath, "utf8");
+      console.log("File contents successfully loaded:", contents);
+      return JSON.parse(contents);
+    } catch (error) {
+      // console.error("Error reading file:", error);
+      return { waitingGuests: [], completedGuests: [] };
     }
-  }, [guests]);
+  }, []);
+
+  const writeDataFile = async (data: string) => {
+    try {
+      // Check if the directory exists
+      const dirExists = await RNFS.exists(STORAGE_FOLDER_PATH);
+      if (!dirExists) {
+        await RNFS.mkdir(STORAGE_FOLDER_PATH);
+      }
+
+      console.log("Storage write File Path:", filePath);
+      console.log("Saving Data:", data); // Log before writing
+      await RNFS.writeFile(filePath, data, "utf8");
+      // Verify if file exists after writing
+      const verifyExists = await RNFS.exists(filePath);
+      if (verifyExists) {
+        console.log("File written successfully!");
+      } else {
+        console.log("File was not saved!");
+      }
+
+      return true;
+    } catch (error) {
+      // console.error("Error writing file:", error);
+      return false;
+    }
+  };
+
+  const ensureStoragePathExists = async () => {
+    try {
+      const exists = await RNFS.exists(STORAGE_FOLDER_PATH);
+      if (!exists) {
+        await RNFS.mkdir(STORAGE_FOLDER_PATH);
+        console.log("Created storage folder:", STORAGE_FOLDER_PATH);
+      }
+    } catch (error) {
+      console.error("Error ensuring storage path:", error);
+    }
+  };
 
   // Add a new guest to the waiting list
   const addGuest = async (
@@ -148,11 +138,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       waitingTime: estimatedWaitingTime,
     };
 
-    setGuests((prev) => [...prev, newGuest]);
+    setGuests((prev) => (prev ? [...prev, newGuest] : [newGuest]));
   };
 
   // Update a guest's status
   const updateGuestStatus = async (id: string, status: Guest["status"]) => {
+    if (!guests) return; // Guard against undefined guests
+
     const now = new Date();
     const updatedGuests = guests.map((guest) =>
       guest.id === id
@@ -222,10 +214,121 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     await AsyncStorage.setItem("settings", JSON.stringify(newSettings));
   };
 
+  // Request Permissions
+  async function requestStoragePermission() {
+    try {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      ]);
+
+      if (
+        granted[PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE] ===
+          PermissionsAndroid.RESULTS.GRANTED &&
+        granted[PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE] ===
+          PermissionsAndroid.RESULTS.GRANTED
+      ) {
+        console.log("Storage permission granted");
+      } else {
+        console.log("Storage permission denied");
+      }
+    } catch (err) {
+      console.warn("Error requesting permissions:", err);
+    }
+  }
+
+  // Load data on initial mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        console.log("Checking storage on startup...");
+        const fileExists = await RNFS.exists(filePath);
+        if (!fileExists) {
+          console.log("No existing file found. Initializing empty list.");
+          setGuests([]);
+          return;
+        }
+
+        const fileContents = await readDataFile();
+        if (fileContents) {
+          console.log("Data loaded from file storage");
+          setLocalGuestData(fileContents);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setGuests([]);
+      }
+    };
+    loadData();
+  }, [readDataFile]);
+
+  // Save data when it changes
+  useEffect(() => {
+    const saveData = async () => {
+      const dataToSave = JSON.stringify(localGuestData);
+      await writeDataFile(dataToSave);
+    };
+    // Debounce save operations to avoid excessive writes
+    const debounceTimer = setTimeout(saveData, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [localGuestData]);
+
+  useEffect(() => {
+    ensureStoragePathExists();
+  }, []);
+
+  useEffect(() => {
+    requestStoragePermission();
+  }, []);
+
+  useEffect(() => {
+    const saveInLineGuests = async () => {
+      try {
+        await AsyncStorage.setItem(
+          "inLineGuests",
+          JSON.stringify(inLineGuests)
+        );
+      } catch (error) {
+        console.error("Error saving inLineGuests:", error);
+      }
+    };
+    saveInLineGuests();
+  }, [inLineGuests]);
+
+  useEffect(() => {
+    const loadInLineGuests = async () => {
+      try {
+        const storedInLineGuests = await AsyncStorage.getItem("inLineGuests");
+        if (storedInLineGuests) {
+          setInLineGuests(JSON.parse(storedInLineGuests));
+        }
+      } catch (error) {
+        console.error("Error loading inLineGuests:", error);
+      }
+    };
+    loadInLineGuests();
+  }, []);
+  
+  // Save guests data when it changes
+  useEffect(() => {
+    const saveGuests = async () => {
+      try {
+        await RNFS.writeFile(filePath, JSON.stringify(guests || []), "utf8");
+        console.log("Guests saved to file:", guests);
+      } catch (error) {
+        // console.error("Error saving guests to file:", error);
+        return error;
+      }
+    };
+    if (guests.length > 0) {
+      saveGuests();
+    }
+  }, [guests]);
+
   return (
     <AppContext.Provider
       value={{
-        guests,
+        guests: guests || [],
         waitingGuests,
         completedGuests,
         dailyStats,
@@ -248,7 +351,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error('useAppContext must be used within an AppProvider');
+    throw new Error("useAppContext must be used within an AppProvider");
   }
   return context;
 };
