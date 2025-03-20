@@ -10,6 +10,9 @@ import { AppSettings, DailyStats, Guest } from "../types";
 import RNFS from "react-native-fs";
 import { STORAGE_FOLDER_PATH, filePath } from "../config/storage";
 import { PermissionsAndroid } from "react-native";
+import TcpSocket from "react-native-tcp-socket";
+import { NetworkInfo } from "react-native-network-info";
+
 interface GuestData {
   waitingGuests: any[];
   completedGuests: any[];
@@ -21,6 +24,8 @@ interface AppContextType {
   dailyStats: DailyStats[];
   settings: AppSettings;
   estimatedWaitingTime: number;
+  deviceRole: "WaitingManager" | "TableManager" | null;
+  setDeviceRole: (role: "WaitingManager" | "TableManager" | null) => void;
   addGuest: (
     guest: Omit<Guest, "id" | "registeredAt" | "status" | "waitingTime">
   ) => Promise<void>;
@@ -29,6 +34,12 @@ interface AppContextType {
   updateSettings: (settings: AppSettings) => Promise<void>;
   inLineGuests: string[];
   setInLineGuests: (inLineGuests: string[]) => void;
+  role: string | null;
+  setRole: (role: string) => void;
+  serverStatus: string;
+  clientStatus: string;
+  startServer: () => void;
+  connectToServer: (serverIP: string) => void;
 }
 
 const defaultSettings: AppSettings = {
@@ -45,6 +56,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [inLineGuests, setInLineGuests] = useState<string[]>([]);
+  const [role, setRole] = useState<string | null>(null);
+  const [serverStatus, setServerStatus] = useState<string>("Disconnected");
+  const [clientStatus, setClientStatus] = useState<string>("Disconnected");
+  const [deviceRole, setDeviceRole] = useState<
+    "WaitingManager" | "TableManager" | null
+  >(null);
   const [localGuestData, setLocalGuestData] = useState<GuestData>({
     waitingGuests: [],
     completedGuests: [],
@@ -57,6 +74,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const completedGuests = guests
     ? guests.filter((guest) => guest.status !== "waiting")
     : [];
+  const PORT = 9090;
+  const [serverIP, setServerIP] = useState<string | null>(null);
 
   // Calculate estimated waiting time based on settings and current waitList
   const estimatedWaitingTime = Math.max(
@@ -66,6 +85,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     ),
     0
   );
+
+  // Start TCP Server (Waiting Manager) */
+  const startServer = () => {
+    NetworkInfo.getIPAddress().then((ip) => {
+      setServerIP(ip);
+      console.log("Server IP:", ip);
+    });
+
+    const server = TcpSocket.createServer((socket) => {
+      console.log(
+        "📲 Client Connected:",
+        socket.remoteAddress,
+        socket.remotePort
+      );
+      setServerStatus("Client Connected");
+
+      // Listen for data from the client
+      socket.on("data", (data) => {
+        console.log("Received from Client:", data.toString());
+        socket.write("Acknowledged: " + data.toString());
+        const guestData = JSON.stringify(guests);
+        socket.write(`GUEST_DATA:${guestData}`);
+
+        const message = data.toString();
+        if (message.startsWith("GUEST_DATA:")) {
+          const guestData = JSON.parse(message.substring(11));
+          console.log("Received guest data:", guestData);
+          // Process the guest data here
+          setGuests(guestData);
+        } else {
+          console.log("Received from Client:", message);
+        }
+      });
+
+      socket.on("close", () => {
+        console.log("Client Disconnected");
+        setServerStatus("Disconnected");
+      });
+
+      socket.on("error", (err) => console.log("⚠️ Server Error:", err));
+    });
+
+    server.listen({ port: PORT, host: "0.0.0.0" }, () => {
+      console.log("Server Running on Port:", PORT);
+      setServerStatus("Server Running");
+    });
+  };
+
+  // Connect as Client (Table Manager) */
+  const connectToServer = (serverIP: string) => {
+    console.log("Connecting to Server at:", serverIP);
+
+    const client = TcpSocket.createConnection(
+      { port: PORT, host: serverIP },
+      () => {
+        console.log("Connected to Server!");
+        setClientStatus("Connected to Server");
+
+        // Send guest data to server
+        const guestData = JSON.stringify(guests);
+        client.write(`GUEST_DATA:${guestData}`);
+
+        client.on("data", (data) => {
+          console.log("Received from Server:", data.toString());
+        });
+
+        client.on("error", (err) => {
+          console.log("Client Error:", err);
+          setClientStatus("Disconnected");
+        });
+
+        client.on("close", () => {
+          console.log("Disconnected from Server");
+          setClientStatus("Disconnected");
+        });
+      }
+    );
+  };
 
   // File operations
   const readDataFile = useCallback(async () => {
@@ -121,7 +218,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log("Created storage folder:", STORAGE_FOLDER_PATH);
       }
     } catch (error) {
-      console.error("Error ensuring storage path:", error);
+      // console.error("Error ensuring storage path:", error);
+      return error;
     }
   };
 
@@ -308,7 +406,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     loadInLineGuests();
   }, []);
-  
+
   // Save guests data when it changes
   useEffect(() => {
     const saveGuests = async () => {
@@ -334,6 +432,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         dailyStats,
         settings,
         estimatedWaitingTime,
+        deviceRole,
+        role,
+        setRole,
+        serverStatus,
+        clientStatus,
+        setDeviceRole,
+        startServer,
+        connectToServer,
         addGuest,
         updateGuestStatus,
         getDailyStats,
