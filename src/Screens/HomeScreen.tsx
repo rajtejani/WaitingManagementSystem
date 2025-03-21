@@ -15,22 +15,10 @@ const HomeScreen = () => {
     "upcoming"
   );
   const [isAddModalVisible, setAddModalVisible] = useState(false);
-  const [serverIP, setServerIP] = useState<string>("");
 
   // get data from AppContext
-  const {
-    waitingGuests,
-    completedGuests,
-    deviceRole,
-    role,
-    setRole,
-    serverStatus,
-    clientStatus,
-    startServer,
-    connectToServer,
-  } = useAppContext();
+  const { waitingGuests, completedGuests } = useAppContext();
 
-  // get data from AppContext
   const upcomingGuestsCount = waitingGuests.filter(
     (guest) => guest.status
   ).length;
@@ -40,52 +28,6 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ fontSize: 14, marginBottom: 12 }}>
-          {role ? `You are: ${role}` : "Select Your Role"}
-        </Text>
-
-        {!role ? (
-          <>
-            <Button
-              title="Waiting Manager (Server)"
-              onPress={() => setRole("Waiting Manager")}
-            />
-            <Button
-              title="Table Manager (Client)"
-              onPress={() => setRole("Table Manager")}
-            />
-          </>
-        ) : (
-          <>
-            {role === "Waiting Manager" ? (
-              <>
-                <Button title="Start Server" onPress={startServer} />
-                <Text>Status: {serverStatus}</Text>
-              </>
-            ) : (
-              <>
-                <TextInput
-                  placeholder="Enter Server IP"
-                  value={serverIP}
-                  onChangeText={setServerIP}
-                  style={{
-                    borderWidth: 1,
-                    padding: 10,
-                    width: 200,
-                    marginVertical: 10,
-                  }}
-                />
-                <Button
-                  title="Connect to Server"
-                  onPress={() => connectToServer(serverIP)}
-                />
-                <Text>Status: {clientStatus}</Text>
-              </>
-            )}
-          </>
-        )}
-      </View>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>

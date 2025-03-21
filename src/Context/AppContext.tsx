@@ -6,14 +6,13 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { AppSettings, DailyStats, Guest } from "../types";
-import RNFS from "react-native-fs";
-import { STORAGE_FOLDER_PATH, filePath } from "../config/storage";
 import { PermissionsAndroid } from "react-native";
+import RNFS from "react-native-fs";
 import TcpSocket from "react-native-tcp-socket";
-import { NetworkInfo } from "react-native-network-info";
+import { STORAGE_FOLDER_PATH, filePath } from "../config/storage";
+import { AppSettings, DailyStats, Guest } from "../types";
 
-interface GuestData {
+interface data {
   waitingGuests: any[];
   completedGuests: any[];
 }
@@ -36,10 +35,8 @@ interface AppContextType {
   setInLineGuests: (inLineGuests: string[]) => void;
   role: string | null;
   setRole: (role: string) => void;
-  serverStatus: string;
-  clientStatus: string;
-  startServer: () => void;
-  connectToServer: (serverIP: string) => void;
+  server: any;
+  client: any;
 }
 
 const defaultSettings: AppSettings = {
@@ -53,19 +50,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [guests, setGuests] = useState<Guest[]>([]);
+  const [demoGuests, setDemoGuests] = useState<any[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [inLineGuests, setInLineGuests] = useState<string[]>([]);
   const [role, setRole] = useState<string | null>(null);
-  const [serverStatus, setServerStatus] = useState<string>("Disconnected");
-  const [clientStatus, setClientStatus] = useState<string>("Disconnected");
   const [deviceRole, setDeviceRole] = useState<
     "WaitingManager" | "TableManager" | null
   >(null);
-  const [localGuestData, setLocalGuestData] = useState<GuestData>({
+  const [localData, setLocalData] = useState<data>({
     waitingGuests: [],
     completedGuests: [],
   });
+
+  [{}];
 
   // Calculated properties
   const waitingGuests = guests
@@ -74,8 +72,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const completedGuests = guests
     ? guests.filter((guest) => guest.status !== "waiting")
     : [];
+  const guestData = { waitingGuests, completedGuests };
   const PORT = 9090;
-  const [serverIP, setServerIP] = useState<string | null>(null);
+  const serverIP = "192.168.29.35";
 
   // Calculate estimated waiting time based on settings and current waitList
   const estimatedWaitingTime = Math.max(
@@ -85,104 +84,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     ),
     0
   );
-
-  // Start TCP Server (Waiting Manager) */
-  const startServer = () => {
-    NetworkInfo.getIPAddress().then((ip) => {
-      setServerIP(ip);
-      console.log("Server IP:", ip);
-    });
-
-    const server = TcpSocket.createServer((socket) => {
-      console.log(
-        "📲 Client Connected:",
-        socket.remoteAddress,
-        socket.remotePort
-      );
-      setServerStatus("Client Connected");
-
-      // Listen for data from the client
-      socket.on("data", (data) => {
-        console.log("Received from Client:", data.toString());
-        socket.write("Acknowledged: " + data.toString());
-        const guestData = JSON.stringify(guests);
-        socket.write(`GUEST_DATA:${guestData}`);
-
-        const message = data.toString();
-        if (message.startsWith("GUEST_DATA:")) {
-          const guestData = JSON.parse(message.substring(11));
-          console.log("Received guest data:", guestData);
-          // Process the guest data here
-          setGuests(guestData);
-        } else {
-          console.log("Received from Client:", message);
-        }
-      });
-
-      socket.on("close", () => {
-        console.log("Client Disconnected");
-        setServerStatus("Disconnected");
-      });
-
-      socket.on("error", (err) => console.log("⚠️ Server Error:", err));
-    });
-
-    server.listen({ port: PORT, host: "0.0.0.0" }, () => {
-      console.log("Server Running on Port:", PORT);
-      setServerStatus("Server Running");
-    });
-  };
-
-  // Connect as Client (Table Manager) */
-  const connectToServer = (serverIP: string) => {
-    console.log("Connecting to Server at:", serverIP);
-
-    const client = TcpSocket.createConnection(
-      { port: PORT, host: serverIP },
-      () => {
-        console.log("Connected to Server!");
-        setClientStatus("Connected to Server");
-
-        // Send guest data to server
-        const guestData = JSON.stringify(guests);
-        client.write(`GUEST_DATA:${guestData}`);
-
-        client.on("data", (data) => {
-          console.log("Received from Server:", data.toString());
-        });
-
-        client.on("error", (err) => {
-          console.log("Client Error:", err);
-          setClientStatus("Disconnected");
-        });
-
-        client.on("close", () => {
-          console.log("Disconnected from Server");
-          setClientStatus("Disconnected");
-        });
-      }
-    );
-  };
-
-  // File operations
-  const readDataFile = useCallback(async () => {
-    try {
-      // Check if the directory exists
-      const exists = await RNFS.exists(filePath);
-      if (!exists) {
-        console.log(`Storage file doesn't exist yet, ${exists}`);
-        // return null;
-        return { waitingGuests: [], completedGuests: [] };
-      }
-
-      const contents = await RNFS.readFile(filePath, "utf8");
-      console.log("File contents successfully loaded:", contents);
-      return JSON.parse(contents);
-    } catch (error) {
-      // console.error("Error reading file:", error);
-      return { waitingGuests: [], completedGuests: [] };
-    }
-  }, []);
 
   const writeDataFile = async (data: string) => {
     try {
@@ -210,6 +111,88 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Start TCP Server (Waiting Manager) */
+  const server = TcpSocket.createServer((socket) => {
+    // NetworkInfo.getIPAddress().then((ip) => console.log("Server IP:", ip));
+    // console.log(
+    //   "📲 Client Connected:",
+    //   socket.remoteAddress,
+    //   socket.remotePort
+    // );
+    // Handle incoming data
+    socket.on("data", (data) => {
+      const message = data.toString();
+      console.log("Received from Client:", message);
+
+      if (message.startsWith("GUEST_DATA:")) {
+        const jsonString = message.replace("GUEST_DATA:", "");
+        try {
+          const guestData = JSON.parse(jsonString);
+          console.log("Parsed Guest Data:", guestData);
+        } catch (error) {
+          console.log("Error parsing JSON:", error);
+        }
+      }
+
+      socket.write("Server received: " + message);
+    });
+
+    socket.on("close", () => {
+      console.log("Client Disconnected");
+    });
+
+    socket.on("error", (err) => console.log("⚠️ Server Error:", err));
+  });
+
+  // Listen for incoming connections on port 9090
+  server.listen({ port: PORT, host: "0.0.0.0" }, () => {
+    console.log("Server Running on Port:", PORT);
+  });
+
+  // Connect as Client (Table Manager) */
+  const client = TcpSocket.createConnection(
+    { port: PORT, host: "192.168.29.35" },
+    () => {
+      console.log("Connected to Server!");
+
+      // Send guest data to server
+      const data = JSON.stringify(guestData);
+      client.write(`GUEST_DATA:${data}`);
+
+      client.on("data", (data) => {
+        console.log("Parsed Guest Data:", guestData);
+      });
+
+      client.on("error", (err) => {
+        console.log("Client Error:", err);
+      });
+
+      client.on("close", () => {
+        console.log("Disconnected from Server");
+      });
+    }
+  );
+
+  // File operations
+  const readDataFile = useCallback(async () => {
+    try {
+      // Check if the directory exists
+      const exists = await RNFS.exists(filePath);
+      if (!exists) {
+        console.log(`Storage file doesn't exist yet, ${exists}`);
+        // return null;
+        return { waitingGuests: [], completedGuests: [] };
+      }
+
+      const contents = await RNFS.readFile(filePath, "utf8");
+      console.log("File contents successfully loaded:", contents);
+      return JSON.parse(contents);
+    } catch (error) {
+      // console.error("Error reading file:", error);
+      return { waitingGuests: [], completedGuests: [] };
+    }
+  }, []);
+
   const ensureStoragePathExists = async () => {
     try {
       const exists = await RNFS.exists(STORAGE_FOLDER_PATH);
@@ -225,12 +208,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Add a new guest to the waiting list
   const addGuest = async (
-    guestData: Omit<Guest, "id" | "registeredAt" | "status" | "waitingTime">
+    data: Omit<Guest, "id" | "registeredAt" | "status" | "waitingTime">
   ) => {
     const now = new Date();
     const newGuest: Guest = {
       id: Date.now().toString(),
-      ...guestData,
+      ...data,
       registeredAt: now.toISOString(),
       status: "waiting",
       waitingTime: estimatedWaitingTime,
@@ -350,7 +333,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         const fileContents = await readDataFile();
         if (fileContents) {
           console.log("Data loaded from file storage");
-          setLocalGuestData(fileContents);
+          setLocalData(fileContents);
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -363,13 +346,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Save data when it changes
   useEffect(() => {
     const saveData = async () => {
-      const dataToSave = JSON.stringify(localGuestData);
+      const dataToSave = JSON.stringify(localData);
       await writeDataFile(dataToSave);
     };
     // Debounce save operations to avoid excessive writes
     const debounceTimer = setTimeout(saveData, 500);
     return () => clearTimeout(debounceTimer);
-  }, [localGuestData]);
+  }, [localData]);
 
   useEffect(() => {
     ensureStoragePathExists();
@@ -434,17 +417,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         estimatedWaitingTime,
         deviceRole,
         role,
+        server,
+        client,
+        inLineGuests,
         setRole,
-        serverStatus,
-        clientStatus,
         setDeviceRole,
-        startServer,
-        connectToServer,
         addGuest,
         updateGuestStatus,
         getDailyStats,
         updateSettings,
-        inLineGuests,
         setInLineGuests,
       }}
     >
