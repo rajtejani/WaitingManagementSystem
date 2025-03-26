@@ -9,8 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import DropShadow from "react-native-drop-shadow";
-import AntDesign from "react-native-vector-icons/AntDesign";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAppContext } from "../Context/AppContext";
@@ -19,6 +17,24 @@ import { Guest } from "../types";
 const WaitingList = () => {
   const { waitingGuests, updateGuestStatus, inLineGuests, setInLineGuests } =
     useAppContext();
+
+  const getStatusColor = (status: Guest["status"]) => {
+    switch (status) {
+      case "seated":
+        return "#4CAF50";
+      case "cancelled":
+        return "#F44336";
+      default:
+        return "#ffc107";
+    }
+  };
+
+  const getStatusIcon = (status: Guest["status"]) => {
+    switch (status) {
+      default:
+        return "circle";
+    }
+  };
 
   const handleCall = (phoneNumber: string) => {
     const telUrl = `tel:${phoneNumber}`;
@@ -50,6 +66,7 @@ const WaitingList = () => {
     );
   };
   const handleInLine = (id: string) => {
+    updateGuestStatus(id, "waiting");
     setInLineGuests([...inLineGuests, id]);
   };
 
@@ -63,146 +80,115 @@ const WaitingList = () => {
   // };
 
   const renderItem = ({ item }: { item: Guest }) => {
+    const statusColor = getStatusColor(item.status);
+    const statusIcon = getStatusIcon(item.status);
     // const waitedTime = calculateWaitedTime(item.entryTime);
     const isInLine = inLineGuests.includes(item._id);
     return (
-      <DropShadow
-        style={{
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: 0,
-          },
-          shadowOpacity: 1,
-          shadowRadius: 5,
-        }}
-      >
-        <View
-          style={[styles.guestItem, isInLine ? styles.inLineGuestItem : null]}
-        >
-          <View style={styles.guestDetails}>
-            <View style={styles.guestContainer}>
-              <View style={styles.guestInfo}>
-                <View style={styles.iconContainer}>
-                  <AntDesign
-                    name="user"
-                    size={18}
-                    style={[
-                      styles.mainIcon,
-                      isInLine ? styles.inLineGuestText : null,
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.guestName,
-                      isInLine ? styles.inlineGuestName : null,
-                    ]}
-                  >
-                    {item.name}
-                  </Text>
-                </View>
-                <View style={styles.iconContainer}>
-                  <Ionicons
-                    name="call-outline"
-                    size={18}
-                    style={[
-                      styles.mainIcon,
-                      isInLine ? styles.inLineGuestText : null,
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.guestName,
-                      isInLine ? styles.inLineGuestText : null,
-                    ]}
-                  >
-                    {item.phoneNumber}
-                  </Text>
-                </View>
-                <View style={styles.timeInfo}>
-                  <View style={styles.timeBlock}>
-                    <MaterialIcons
-                      name="access-time"
-                      size={18}
-                      style={[
-                        styles.icon,
-                        isInLine ? styles.inLineGuestText : null,
-                      ]}
-                    />
-                    <Text
-                      style={[
-                        styles.timeText,
-                        isInLine ? styles.inLineGuestText : null,
-                      ]}
-                    >
-                      Entry Time: {format(parseISO(item.entryTime), "hh:mm a")}
-                    </Text>
+      <View style={[styles.guestItem]}>
+        <View style={styles.guestDetails}>
+          <View style={styles.guestContainer}>
+            <View style={styles.guestInfo}>
+              <View style={styles.guestNameContainer}>
+                <View>
+                  <View style={styles.iconContainer}>
+                    <Text style={[styles.guestName]}>{item.name}</Text>
+                  </View>
+                  <View style={styles.iconContainer}>
+                    <Text style={[styles.guestPhone]}>{item.phoneNumber}</Text>
                   </View>
                 </View>
-                <View style={styles.timeInfo}>
-                  <View style={styles.timeBlock}>
-                    <MaterialIcons
-                      name="access-time"
-                      size={18}
-                      style={[
-                        styles.icon,
-                        isInLine ? styles.inLineGuestText : null,
-                      ]}
-                    />
-                    <Text
-                      style={[
-                        styles.timeText,
-                        isInLine ? styles.inLineGuestText : null,
-                      ]}
-                    >
-                      Waiting Time: {item.waitingTime}
-                    </Text>
-                  </View>
+                <View style={styles.numberCircle}>
+                  <Text style={styles.numberText}>{item.numberOfGuests}</Text>
+                  {item.willingToShare && (
+                    <Text style={styles.sharingText}>Sharing</Text>
+                  )}
                 </View>
               </View>
-              <View style={styles.numberCircle}>
-                <Text style={styles.numberText}>{item.numberOfGuests}</Text>
-                {item.willingToShare && (
-                  <Text style={styles.sharingText}>Sharing</Text>
-                )}
+
+              <View style={styles.timeContainer}>
+                <View style={styles.timeRow}>
+                  <View style={styles.timeInfo}>
+                    <View style={styles.timeBlock}>
+                      <MaterialIcons
+                        name="access-time"
+                        size={18}
+                        style={[styles.icon]}
+                      />
+                      <Text style={[styles.timeText]}>
+                        {" "}
+                        {format(parseISO(item.entryTime), "hh:mm a")}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.timeInfo}>
+                    <View style={styles.timeBlock}>
+                      <MaterialIcons
+                        name="watch"
+                        size={18}
+                        style={[styles.icon]}
+                      />
+                      <Text style={[styles.timeText]}>
+                        {item.waitingTime} min
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.statusContainer,
+                    {
+                      backgroundColor: `${statusColor}20`,
+                      borderColor: `${statusColor}`,
+                    },
+                  ]}
+                >
+                  <MaterialIcons
+                    name={statusIcon}
+                    size={10}
+                    color={statusColor}
+                  />
+                  <Text style={[styles.statusText, { color: statusColor }]}>
+                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                  </Text>
+                </View>
               </View>
             </View>
+          </View>
 
-            <View style={styles.actions}>
-              <View style={styles.actionsContainer}>
+          <View style={styles.actions}>
+            <View style={styles.actionsContainer}>
+              {!isInLine ? (
                 <TouchableOpacity
-                  style={styles.callButton}
-                  onPress={() => handleCall(item.phoneNumber)}
+                  style={styles.inLineButton}
+                  onPress={() => handleInLine(item._id)}
                 >
-                  <Ionicons name="call" size={20} color="#FFF" />
+                  <Text style={styles.inLineText}>In Line</Text>
                 </TouchableOpacity>
-                {!isInLine ? (
-                  <TouchableOpacity
-                    style={styles.inLineButton}
-                    onPress={() => handleInLine(item._id)}
-                  >
-                    <Text style={styles.inLineText}>In Line</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.completeButton}
-                    onPress={() => handleComplete(item._id)}
-                  >
-                    <Text style={styles.completeText}>Complete</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
+              ) : (
+                <TouchableOpacity
+                  style={styles.completeButton}
+                  onPress={() => handleComplete(item._id)}
+                >
+                  <Text style={styles.completeText}>Complete</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => handleCancel(item._id)}
+                style={styles.callButton}
+                onPress={() => handleCall(item.phoneNumber)}
               >
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Ionicons
+                  name="call-outline"
+                  size={20}
+                  color="#FFF"
+                  style={styles.callIcon}
+                />
+                <Text style={styles.callText}>Call</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
-      </DropShadow>
+      </View>
     );
   };
   return (
@@ -231,14 +217,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  icon: { color: "#666" },
+  icon: { color: "#666", fontWeight: "600" },
+  callIcon: { fontWeight: "bold" },
   mainIcon: { color: "#000" },
   listContent: {
-    padding: 15,
     paddingBottom: 20,
   },
   guestItem: {
     flexDirection: "row",
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
     padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 8,
@@ -250,26 +237,38 @@ const styles = StyleSheet.create({
   },
   guestContainer: {
     flexDirection: "row",
-  },
-  inLineGuestItem: {
-    backgroundColor: "#6A96F2",
+    alignItems: "center",
   },
   numberCircle: {
+    marginRight: 25,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+  },
+  statusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 3,
+    paddingHorizontal: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginLeft: 2,
+    fontFamily: "Poppins",
   },
   completeButton: {
     backgroundColor: "#5CF34B",
     paddingVertical: 8,
-    // paddingHorizontal: 16,
-    borderRadius: 4,
-    width: 100,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
   },
   completeText: {
     color: "#fff",
-    fontSize: 12,
-    fontWeight: "500",
+    fontSize: 14,
+    fontWeight: "bold",
     textAlign: "center",
     fontFamily: "Poppins",
   },
@@ -277,16 +276,21 @@ const styles = StyleSheet.create({
     color: "#000",
     fontSize: 40,
     fontFamily: "Poppins",
-
     fontWeight: "bold",
   },
   guestInfo: {
+    flexDirection: "column",
     flex: 1,
   },
-
+  guestNameContainer: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   guestName: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: 18,
+    marginBottom: 2,
     marginLeft: 4,
     fontFamily: "Poppins",
     fontWeight: "bold",
@@ -296,15 +300,25 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins",
   },
   iconContainer: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
+    // flexDirection: "row",
+    // alignItems: "center",
   },
   guestPhone: {
+    fontFamily: "Poppins",
     fontSize: 14,
     color: "#666",
+    fontWeight: 600,
     marginBottom: 8,
     marginLeft: 4,
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 4,
+    width: "100%",
+  },
+  timeRow: {
+    flexDirection: "row",
   },
   timeInfo: {
     flexDirection: "row",
@@ -312,39 +326,43 @@ const styles = StyleSheet.create({
   timeBlock: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 12,
-    marginBottom: 8,
+    marginRight: 16,
+    // marginBottom: 8,
   },
   timeText: {
     fontSize: 14,
     color: "#666",
-    marginLeft: 4,
+    fontWeight: "700",
+    marginLeft: 2,
     fontFamily: "Poppins",
   },
   inLineGuestText: {
     color: "#FFF",
+    fontFamily: "Poppins",
   },
   actions: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 14,
   },
   actionsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     gap: 8,
+    width: "100%",
   },
   inLineButton: {
     backgroundColor: "#6A96F2",
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: 4,
-    width: 100,
+    borderRadius: 8,
+    flex: 1,
   },
   inLineText: {
     color: "#FFF",
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
     fontFamily: "Poppins",
@@ -365,11 +383,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   callButton: {
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     backgroundColor: "#F44336",
     fontWeight: "bold",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  callText: {
+    color: "#FFF",
+    marginLeft: 3,
+    fontSize: 14,
+    fontWeight: "bold",
+    fontFamily: "Poppins",
   },
   emptyStateContainer: {
     flex: 1,

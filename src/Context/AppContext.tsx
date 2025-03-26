@@ -21,6 +21,8 @@ interface AppContextType {
   updateSettings: (settings: AppSettings) => Promise<void>;
   inLineGuests: string[];
   setInLineGuests: (inLineGuests: string[]) => void;
+  updateUserRole: (role: string) => void;
+  userRole: string | null;
 }
 
 const defaultSettings: AppSettings = {
@@ -37,6 +39,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [inLineGuests, setInLineGuests] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Calculated properties
   const waitingGuests = todaysGuestList.filter(
@@ -112,6 +115,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     saveInLineGuests();
   }, [inLineGuests]);
 
+  const updateUserRole = (role: string) => {
+    setUserRole(role);
+  };
   // Add a new guest to the waiting list
   const addGuest = async (
     guestData: Omit<Guest, "entryTime" | "status" | "waitingTime">
@@ -124,7 +130,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       waitingTime: estimatedWaitingTime,
     };
   };
-
   // Update a guest's status
   const updateGuestStatus = async (id: string, status: Guest["status"]) => {
     // Update daily stats if guest is seated
@@ -165,6 +170,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         updateSettings,
         inLineGuests,
         setInLineGuests,
+        userRole,
+        updateUserRole,
       }}
     >
       {children}

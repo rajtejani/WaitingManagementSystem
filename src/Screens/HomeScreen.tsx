@@ -1,21 +1,19 @@
-// screens/HomeScreen.tsx
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useAppContext } from '../Context/AppContext';
-import AddGuestModal from '../components/AddGuestModal';
-import Badge from '../components/Badge';
-import CompletedList from '../components/CompletedList';
-import WaitingList from '../components/WaitingList';
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { useAppContext } from "../Context/AppContext";
+import AddGuestModal from "../components/AddGuestModal";
+import Badge from "../components/Badge";
+import CompletedList from "../components/CompletedList";
+import WaitingList from "../components/WaitingList";
 
 const HomeScreen = () => {
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>(
-    'upcoming'
+  const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
+    "upcoming"
   );
   const [isAddModalVisible, setAddModalVisible] = useState(false);
-  const {  waitingGuests, completedGuests } =
-    useAppContext();
+  const { waitingGuests, completedGuests, userRole } = useAppContext();
   const upcomingGuestsCount = waitingGuests.filter(
     (guest) => guest.status
   ).length;
@@ -27,15 +25,24 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>
-            {activeTab === 'upcoming' ? 'Waiting List' : 'Completed List'}
-          </Text>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setAddModalVisible(true)}
-          >
-            <MaterialIcons name="add" size={24} color="#fff" />
-          </TouchableOpacity>
+          <View>
+            <Text style={styles.title}>
+              {activeTab === "upcoming"
+                ? "Guest Waiting List"
+                : "Completed List"}
+            </Text>
+            <Text style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>
+              {userRole}
+            </Text>
+          </View>
+          {userRole !== "Table Manager" && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setAddModalVisible(true)}
+            >
+              <MaterialIcons name="add" size={28} color="#E73E1F" />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* {activeTab === "upcoming" && (
@@ -49,13 +56,13 @@ const HomeScreen = () => {
 
         <View style={styles.tabContainer}>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
-            onPress={() => setActiveTab('upcoming')}
+            style={[styles.tab, activeTab === "upcoming" && styles.activeTab]}
+            onPress={() => setActiveTab("upcoming")}
           >
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'upcoming' && styles.activeTabText,
+                activeTab === "upcoming" && styles.activeTabText,
               ]}
             >
               Upcoming
@@ -63,13 +70,13 @@ const HomeScreen = () => {
             <Badge count={upcomingGuestsCount} />
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tab, activeTab === 'completed' && styles.activeTab]}
-            onPress={() => setActiveTab('completed')}
+            style={[styles.tab, activeTab === "completed" && styles.activeTab]}
+            onPress={() => setActiveTab("completed")}
           >
             <Text
               style={[
                 styles.tabText,
-                activeTab === 'completed' && styles.activeTabText,
+                activeTab === "completed" && styles.activeTabText,
               ]}
             >
               Completed
@@ -79,7 +86,7 @@ const HomeScreen = () => {
         </View>
 
         <View style={styles.listContainer}>
-          {activeTab === 'upcoming' ? <WaitingList /> : <CompletedList />}
+          {activeTab === "upcoming" ? <WaitingList /> : <CompletedList />}
         </View>
       </View>
 
@@ -94,77 +101,78 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F6F1E9',
+    backgroundColor: "#F6F1E9",
   },
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   title: {
-    fontSize: 40,
-    fontWeight: 700,
-    fontFamily: 'Poppins',
+    fontSize: 20,
+    fontWeight: "bold",
+    fontFamily: "Poppins",
   },
   addButton: {
-    backgroundColor: '#E73E1F',
-    width: 34,
-    height: 34,
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
+    // backgroundColor: "#E73E1F",
+    // width: 34,
+    // height: 34,
+    // borderRadius: 4,
+    // justifyContent: "center",
+    // alignItems: "center",
   },
   waitingTimeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 16,
-    backgroundColor: '#F6F1E9',
+    backgroundColor: "#F6F1E9",
     padding: 10,
     borderRadius: 8,
   },
   waitingTimeLabel: {
     fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'Poppins',
+    fontWeight: "500",
+    fontFamily: "Poppins",
   },
   waitingTimeValue: {
     fontSize: 16,
     fontWeight: 700,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
   tabContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: "#EEEEEE",
   },
   tab: {
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     marginRight: 8,
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    backgroundColor: '#F6F1E9',
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    backgroundColor: "#F6F1E9",
     gap: 4,
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: '#E53935',
+    borderBottomColor: "#E53935",
   },
   tabText: {
     fontSize: 16,
-    color: '#666666',
+    color: "#666666",
   },
   activeTabText: {
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: "600",
+    color: "#000000",
   },
   listContainer: {
     flex: 1,
