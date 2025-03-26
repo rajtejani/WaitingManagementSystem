@@ -1,6 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { AppSettings, DailyStats, Guest } from '../types';
+import axios from "axios";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { io } from "socket.io-client";
+import { AppSettings, DailyStats, Guest } from "../types";
+
+export const socket = io(
+  "https://v0-next-js-socket-server-s1.vercel.app/api/socket"
+);
 
 interface AppContextType {
   guests: Guest[];
@@ -9,10 +15,8 @@ interface AppContextType {
   dailyStats: DailyStats[];
   settings: AppSettings;
   estimatedWaitingTime: number;
-  addGuest: (
-    guest: Omit<Guest, 'id' | 'registeredAt' | 'status' | 'waitingTime'>
-  ) => Promise<void>;
-  updateGuestStatus: (id: string, status: Guest['status']) => Promise<void>;
+  addGuest: (guest: Omit<Guest, "entryTime" | "status">) => Promise<void>;
+  updateGuestStatus: (id: string, status: Guest["status"]) => Promise<void>;
   getDailyStats: (date: string) => DailyStats | undefined;
   updateSettings: (settings: AppSettings) => Promise<void>;
   inLineGuests: string[];
@@ -29,14 +33,18 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [guests, setGuests] = useState<Guest[]>([]);
+  const [todaysGuestList, setGuests] = useState<Guest[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [inLineGuests, setInLineGuests] = useState<string[]>([]);
 
   // Calculated properties
-  const waitingGuests = guests.filter((guest) => guest.status === 'waiting');
-  const completedGuests = guests.filter((guest) => guest.status !== 'waiting');
+  const waitingGuests = todaysGuestList.filter(
+    (guest) => guest.status === "waiting"
+  );
+  const completedGuests = todaysGuestList.filter(
+    (guest) => guest.status !== "waiting"
+  );
 
   // Calculate estimated waiting time based on settings and current waitlist
   const estimatedWaitingTime = Math.max(
@@ -46,15 +54,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     ),
     0
   );
+
+  // Initial data fetch and socket subscriptions
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const response = await axios.get(
+          "https://v0-next-js-socket-server-s1.vercel.app/api/guests"
+        );
+        const data = await response.data;
+
+        setGuests(data.guests);
+        setDailyStats(data.dailyStats);
+        setSettings(data.settings || defaultSettings);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
+
+    fetchInitialData();
+
+    // Socket subscriptions
+    socket.on("waitingListUpdate", (updatedGuests: Guest[]) => {
+      setGuests(updatedGuests);
+    });
+
+    return () => {
+      socket.off("waitingListUpdate");
+    };
+  }, []);
+
   useEffect(() => {
     const loadInLineGuests = async () => {
       try {
-        const storedInLineGuests = await AsyncStorage.getItem('inLineGuests');
+        const storedInLineGuests = await AsyncStorage.getItem("inLineGuests");
         if (storedInLineGuests) {
           setInLineGuests(JSON.parse(storedInLineGuests));
         }
       } catch (error) {
-        console.error('Error loading inLineGuests:', error);
+        console.error("Error loading inLineGuests:", error);
       }
     };
     loadInLineGuests();
@@ -64,125 +102,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const saveInLineGuests = async () => {
       try {
         await AsyncStorage.setItem(
-          'inLineGuests',
+          "inLineGuests",
           JSON.stringify(inLineGuests)
         );
       } catch (error) {
-        console.error('Error saving inLineGuests:', error);
+        console.error("Error saving inLineGuests:", error);
       }
     };
     saveInLineGuests();
   }, [inLineGuests]);
 
-  // Load data from AsyncStorage on app start
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const guestsData = await AsyncStorage.getItem('guests');
-        const statsData = await AsyncStorage.getItem('dailyStats');
-        const settingsData = await AsyncStorage.getItem('settings');
-
-        if (guestsData) {setGuests(JSON.parse(guestsData));}
-        if (statsData) {setDailyStats(JSON.parse(statsData));}
-        if (settingsData) {setSettings(JSON.parse(settingsData));}
-      } catch (error) {
-        console.error('Error loading data from storage:', error);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Save guests data when it changes
-  useEffect(() => {
-    const saveGuests = async () => {
-      try {
-        await AsyncStorage.setItem('guests', JSON.stringify(guests));
-      } catch (error) {
-        console.error('Error saving guests data:', error);
-      }
-    };
-
-    if (guests.length > 0) {
-      saveGuests();
-    }
-  }, [guests]);
-
   // Add a new guest to the waiting list
   const addGuest = async (
-    guestData: Omit<Guest, 'id' | 'registeredAt' | 'status' | 'waitingTime'>
+    guestData: Omit<Guest, "entryTime" | "status" | "waitingTime">
   ) => {
     const now = new Date();
     const newGuest: Guest = {
-      id: Date.now().toString(),
       ...guestData,
-      registeredAt: now.toISOString(),
-      status: 'waiting',
+      entryTime: now.toISOString(),
+      status: "waiting",
       waitingTime: estimatedWaitingTime,
     };
-
-    setGuests((prev) => [...prev, newGuest]);
   };
 
   // Update a guest's status
-  const updateGuestStatus = async (id: string, status: Guest['status']) => {
-    const now = new Date();
-    const updatedGuests = guests.map((guest) =>
-      guest.id === id
-        ? {
-            ...guest,
-            status,
-            processedAt:
-              status !== 'waiting' ? now.toISOString() : guest.processedAt,
-          }
-        : guest
-    );
-
-    setGuests(updatedGuests);
-
+  const updateGuestStatus = async (id: string, status: Guest["status"]) => {
     // Update daily stats if guest is seated
-    if (status === 'seated') {
-      const guest = guests.find((g) => g.id === id);
+    if (status === "seated") {
+      const guest = todaysGuestList.find((g) => g._id === id);
       if (guest) {
-        const today = now.toISOString().split('T')[0];
+        const today = new Date().toISOString().split("T")[0];
         updateDailyStats(today, guest);
       }
     }
   };
 
   // Update daily statistics
-  const updateDailyStats = async (date: string, guest: Guest) => {
-    const existingStat = dailyStats.find((stat) => stat.date === date);
-
-    if (existingStat) {
-      const updatedStats = dailyStats.map((stat) =>
-        stat.date === date
-          ? {
-              ...stat,
-              totalGuests: stat.totalGuests + 1,
-              totalPlates: stat.totalPlates + guest.guestCount,
-              guestsServed: [...stat.guestsServed, guest],
-            }
-          : stat
-      );
-
-      setDailyStats(updatedStats);
-      await AsyncStorage.setItem('dailyStats', JSON.stringify(updatedStats));
-    } else {
-      const newStat: DailyStats = {
-        date,
-        totalGuests: 1,
-        totalPlates: guest.guestCount,
-        guestsServed: [guest],
-      };
-
-      setDailyStats((prev) => [...prev, newStat]);
-      await AsyncStorage.setItem(
-        'dailyStats',
-        JSON.stringify([...dailyStats, newStat])
-      );
-    }
-  };
+  const updateDailyStats = async (date: string, guest: Guest) => {};
 
   // Get stats for a specific date
   const getDailyStats = (date: string) => {
@@ -191,14 +147,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Update app settings
   const updateSettings = async (newSettings: AppSettings) => {
-    setSettings(newSettings);
-    await AsyncStorage.setItem('settings', JSON.stringify(newSettings));
+    socket.emit("updateSettings", newSettings);
   };
 
   return (
     <AppContext.Provider
       value={{
-        guests,
+        guests: todaysGuestList,
         waitingGuests,
         completedGuests,
         dailyStats,

@@ -1,30 +1,86 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Animated, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export const SplashScreen = () => {
   const navigation = useNavigation();
+  const [showButtons, setShowButtons] = useState(false);
+  const fadeAnim = new Animated.Value(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const checkDeviceType = async () => {
+      try {
+        const deviceType = await AsyncStorage.getItem('deviceType');
+        
+        if (deviceType) {
+          // If device type exists, navigate to main after 3 seconds
+          const timer = setTimeout(() => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Main' as never }],
+            });
+          }, 3000);
+          return () => clearTimeout(timer);
+        } else {
+          // If no device type, show selection buttons after 3 seconds
+          const timer = setTimeout(() => {
+            setShowButtons(true);
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 150,
+              useNativeDriver: true,
+            }).start();
+          }, 1000);
+          return () => clearTimeout(timer);
+        }
+      } catch (error) {
+        console.error('Error checking device type:', error);
+      }
+    };
+
+    checkDeviceType();
+  }, [navigation, fadeAnim]);
+
+  const handleDeviceSelect = async (type: 'waiting' | 'table') => {
+    try {
+      await AsyncStorage.setItem('deviceType', type);
       navigation.reset({
         index: 0,
         routes: [{ name: 'Main' as never }],
       });
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [navigation]);
+    } catch (error) {
+      console.error('Error saving device type:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View>
-        <Image
+        {!showButtons ?
+          <>
+           <Image
           source={require('../assets/images/logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.title}>Puna Canal</Text>
+            <Text style={styles.title}>Puna Canal</Text>
+          </> : (
+          <Animated.View style={[styles.buttonContainer, { opacity: fadeAnim }]}>
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={() => handleDeviceSelect('waiting')}
+            >
+              <Text style={styles.buttonText}>Waiting Manager</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={() => handleDeviceSelect('table')}
+            >
+              <Text style={styles.buttonText}>Table Manager</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        )}
       </View>
     </View>
   );
@@ -53,6 +109,22 @@ const styles = StyleSheet.create({
     bottom: 20,
     fontSize: 16,
     color: '#666',
+  },
+  buttonContainer: {
+    marginTop: 20,
+    gap: 10,
+  },
+  button: {
+    backgroundColor: '#4A90E2',
+    padding: 15,
+    borderRadius: 8,
+    width: 200,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

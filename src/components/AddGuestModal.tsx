@@ -1,6 +1,7 @@
 import parsePhoneNumber from "libphonenumber-js/max";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
+import axios from "axios";
 import React, { useState } from "react";
 import {
   Alert,
@@ -26,15 +27,16 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [numberOfGuest, setNumberOfGuest] = useState("");
-  const [guestCount, setGuestCount] = useState<number | null>(null);
+  const [numberOfGuests, setnumberOfGuests] = useState<number | null>(null);
   const [willingToShare, setWillingToShare] = useState(false);
+  const [waitingTime, setWaitingTime] = useState(20);
 
   const resetForm = () => {
     setName("");
     setPhoneNumber("");
     setPhoneError("");
     setNumberOfGuest("");
-    setGuestCount(null);
+    setnumberOfGuests(null);
     setWillingToShare(false);
   };
 
@@ -76,22 +78,35 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
       return;
     }
 
-    if (guestCount === null) {
+    if (numberOfGuests === null) {
       Alert.alert("Error", "Please select number of guests");
       return;
     }
+
+    const guestData = {
+      name: name.trim(),
+      phoneNumber: phoneNumber.trim(),
+      numberOfGuests,
+      willingToShare: numberOfGuests === 2 ? willingToShare : false,
+      waitingTime: waitingTime,
+    };
+
     try {
-      await addGuest({
-        name: name.trim(),
-        phoneNumber: phoneNumber.trim(),
-        guestCount,
-        willingToShare: guestCount === 2 ? willingToShare : false,
-      });
+      // First make API call
+      const { data } = await axios.post(
+        "https://v0-next-js-socket-server-s1.vercel.app/api/guests",
+        guestData
+      );
+      console.log(" >>>> Add Data", data);
+
+      // Then add to local state via context
+      await addGuest({ ...guestData, _id: data._id });
       handleClose();
     } catch (error) {
       Alert.alert("Error", "Failed to add guest");
     }
   };
+
   const handlePhoneChange = (text: string) => {
     // Allow only digits
     const cleaned = text.replace(/\D/g, "");
@@ -101,8 +116,8 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
     if (phoneError) setPhoneError("");
   };
 
-  const handleGuestCountSelect = (count: number) => {
-    setGuestCount(count);
+  const handlenumberOfGuestsSelect = (count: number) => {
+    setnumberOfGuests(count);
     setNumberOfGuest(count.toString()); // Update numberOfGuest state
     if (count !== 2) {
       setWillingToShare(false);
@@ -151,6 +166,13 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
               ) : null}
             </View>
 
+            <TextInput
+              style={styles.input}
+              value={waitingTime.toString()}
+              onChangeText={(text) => setWaitingTime(parseInt(text))}
+              keyboardType="phone-pad"
+              placeholder="Enter Waiting Time"
+            />
             <View style={styles.formGroup}>
               {/* <Text style={styles.label}>Number of Guests</Text>   */}
               <TextInput
@@ -159,27 +181,28 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
                 onChangeText={(text) => {
                   setNumberOfGuest(text);
                   if (text !== "") {
-                    setGuestCount(parseInt(text));
+                    setnumberOfGuests(parseInt(text));
                   }
                 }}
                 keyboardType="phone-pad"
                 placeholder="Enter no. of guests"
               />
-              <View style={styles.guestCountContainer}>
+              <View style={styles.numberOfGuestsContainer}>
                 {[2, 4, 6].map((count) => (
                   <TouchableOpacity
                     key={count}
                     style={[
-                      styles.guestCountButton,
-                      guestCount === count && styles.guestCountButtonActive,
+                      styles.numberOfGuestsButton,
+                      numberOfGuests === count &&
+                        styles.numberOfGuestsButtonActive,
                     ]}
-                    onPress={() => handleGuestCountSelect(count)}
+                    onPress={() => handlenumberOfGuestsSelect(count)}
                   >
                     <Text
                       style={[
-                        styles.guestCountButtonText,
-                        guestCount === count &&
-                          styles.guestCountButtonTextActive,
+                        styles.numberOfGuestsButtonText,
+                        numberOfGuests === count &&
+                          styles.numberOfGuestsButtonTextActive,
                       ]}
                     >
                       {count}
@@ -189,7 +212,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
               </View>
             </View>
 
-            {guestCount === 2 && (
+            {numberOfGuests === 2 && (
               <TouchableOpacity
                 style={styles.checkboxContainer}
                 onPress={() => setWillingToShare(!willingToShare)}
@@ -280,13 +303,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
   },
-  guestCountContainer: {
+  numberOfGuestsContainer: {
     paddingTop: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 8,
   },
-  guestCountButton: {
+  numberOfGuestsButton: {
     flex: 1,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -295,15 +318,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     alignItems: "center",
   },
-  guestCountButtonActive: {
+  numberOfGuestsButtonActive: {
     backgroundColor: "#E53935",
     borderColor: "#E53935",
   },
-  guestCountButtonText: {
+  numberOfGuestsButtonText: {
     fontSize: 16,
     color: "#E73E1F",
   },
-  guestCountButtonTextActive: {
+  numberOfGuestsButtonTextActive: {
     color: "#FFF",
     fontWeight: "600",
   },

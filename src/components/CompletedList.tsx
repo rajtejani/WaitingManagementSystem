@@ -49,8 +49,8 @@ const CompletedList = () => {
           <Text style={styles.guestName}>{item.name}</Text>
           <Text style={styles.guestPhone}>{item.phoneNumber}</Text>
           <View style={styles.detailsRow}>
-            <Text style={styles.guestCount}>
-              No. of guests: {item.guestCount}
+            <Text style={styles.numberOfGuests}>
+              No. of guests: {item.numberOfGuests}
             </Text>
             {item.processedAt && (
               <Text style={styles.timeText}>
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  guestCount: {
+  numberOfGuests: {
     fontSize: 13,
     fontFamily: 'Poppins',
 

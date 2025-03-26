@@ -1,11 +1,11 @@
 // types.ts - Type definitions for the app
 export interface Guest {
-    id: string;
+    _id: string;
     name: string;
     phoneNumber: string;
-    guestCount: number;
+    numberOfGuests: number;
     willingToShare: boolean;
-    registeredAt: string; // ISO string
+    entryTime: string; // ISO string
     waitingTime: number; // in minutes
     status: 'waiting' | 'seated' | 'cancelled';
     processedAt?: string; // ISO string when status changes from waiting

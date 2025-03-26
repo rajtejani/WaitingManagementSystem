@@ -1,23 +1,43 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import CustomDatePicker from '../components/CustomDatePicker';
-import { useAppContext } from '../Context/AppContext';
-import type { Guest } from '../types';
+import axios from "axios";
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import CustomDatePicker from "../components/CustomDatePicker";
+import { useAppContext } from "../Context/AppContext";
+import type { DailyStats, Guest } from "../types";
 
 const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [stats, setStats] = useState<DailyStats | undefined>();
   const { getDailyStats } = useAppContext();
 
-  const dateString = selectedDate.toISOString().split('T')[0];
-  const stats = getDailyStats(dateString);
+  const handleDateSelected = async (date: Date) => {
+    setSelectedDate(date);
+    const dateString = date.toISOString().split("T")[0];
+
+    try {
+      const response = await axios.get(
+        `https://v0-next-js-socket-server-s1.vercel.app/api/guests`,
+        {
+          params: {
+            startOfDay: `${dateString}T05:30:00.000Z`,
+            endOfDay: `${dateString}T18:29:59.999Z`,
+          },
+        }
+      );
+      setStats(response.data);
+    } catch (error) {
+      console.error("Error fetching guest history:", error);
+      setStats(undefined);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.title}>History</Text>
-        <CustomDatePicker onDateSelected={setSelectedDate} />
+        <CustomDatePicker onDateSelected={handleDateSelected} />
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Guests</Text>
@@ -34,13 +54,13 @@ const HistoryScreen = () => {
           <View style={styles.guestListContainer}>
             <Text style={styles.sectionTitle}>Guests Served</Text>
             {stats.guestsServed.map((guest: Guest) => (
-              <View key={guest.id} style={styles.guestItem}>
+              <View key={guest._id} style={styles.guestItem}>
                 <View>
                   <Text style={styles.guestName}>{guest.name}</Text>
                   <Text style={styles.guestPhone}>{guest.phoneNumber}</Text>
                 </View>
-                <Text style={styles.guestCount}>
-                  No. of guests: {guest.guestCount}
+                <Text style={styles.numberOfGuests}>
+                  No. of guests: {guest.numberOfGuests}
                 </Text>
               </View>
             ))}
@@ -59,7 +79,7 @@ const HistoryScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F6F1E9',
+    backgroundColor: "#F6F1E9",
   },
   container: {
     flex: 1,
@@ -68,14 +88,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 40,
     fontWeight: 700,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
   datePickerButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: "#DDD",
     borderRadius: 8,
     padding: 12,
     marginBottom: 24,
@@ -84,75 +104,75 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 24,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: "#F8F8F8",
     borderRadius: 4,
     padding: 16,
     marginHorizontal: 4,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statLabel: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 8,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins',
+    fontWeight: "bold",
+    fontFamily: "Poppins",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
   guestListContainer: {
     flex: 1,
   },
   guestItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: "#EEEEEE",
   },
   guestName: {
     fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'Poppins',
+    fontWeight: "500",
+    fontFamily: "Poppins",
   },
   guestPhone: {
     fontSize: 14,
-    color: '#666',
-    fontFamily: 'Poppins',
+    color: "#666",
+    fontFamily: "Poppins",
     marginTop: 4,
   },
-  guestCount: {
+  numberOfGuests: {
     fontSize: 14,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
     borderRadius: 4,
   },
   emptyStateContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginTop: 16,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
 });
 
