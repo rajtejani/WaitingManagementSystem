@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { AppSettings, DailyStats, Guest } from "../types";
+import { AppSettings, DailyStats, Guest, StatusTypes } from "../types";
 
 export const socket = io(
   "https://v0-next-js-socket-server-s1.vercel.app/api/socket"
@@ -15,8 +15,11 @@ interface AppContextType {
   dailyStats: DailyStats[];
   settings: AppSettings;
   estimatedWaitingTime: number;
-  addGuest: (guest: Omit<Guest, "entryTime" | "status">) => Promise<void>;
+  addGuest: (
+    guest: Omit<Guest, "entryTime" | "status" | "waitingTime">
+  ) => Promise<void>;
   updateGuestStatus: (id: string, status: Guest["status"]) => Promise<void>;
+  updateWaitingStatus: (id: string, status: Guest["status"]) => Promise<void>;
   getDailyStats: (date: string) => DailyStats | undefined;
   updateSettings: (settings: AppSettings) => Promise<void>;
   inLineGuests: string[];
@@ -43,10 +46,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Calculated properties
   const waitingGuests = todaysGuestList.filter(
-    (guest) => guest.status === "waiting"
+    (guest) =>
+      guest.status === StatusTypes.waiting ||
+      guest.status === StatusTypes.Confirmed
   );
   const completedGuests = todaysGuestList.filter(
-    (guest) => guest.status !== "waiting"
+    (guest) =>
+      guest.status === StatusTypes.seated ||
+      guest.status === StatusTypes.cancelled
   );
 
   // Calculate estimated waiting time based on settings and current waitlist
@@ -126,20 +133,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const newGuest: Guest = {
       ...guestData,
       entryTime: now.toISOString(),
-      status: "waiting",
+      status: StatusTypes.waiting,
       waitingTime: estimatedWaitingTime,
     };
   };
   // Update a guest's status
-  const updateGuestStatus = async (id: string, status: Guest["status"]) => {
+  const updateGuestStatus = async (id: string, status: StatusTypes) => {
+    const guestIndex = todaysGuestList.findIndex((g) => g._id === id);
+    if (guestIndex !== -1) {
+      todaysGuestList[guestIndex].status = status;
+      setGuests([...todaysGuestList]);
+    }
     // Update daily stats if guest is seated
     if (status === "seated") {
-      const guest = todaysGuestList.find((g) => g._id === id);
+      const guest = todaysGuestList.find(
+        (g) => g._id === id && g.status === "seated"
+      );
       if (guest) {
         const today = new Date().toISOString().split("T")[0];
         updateDailyStats(today, guest);
       }
     }
+  };
+  const updateWaitingStatus = async (id: string, status: StatusTypes) => {
+    console.log("Before update:", todaysGuestList);
+
+    const guestIndex = todaysGuestList.findIndex((guest) => guest._id === id);
+    if (guestIndex !== -1) {
+      const updatedGuests = [...todaysGuestList];
+      updatedGuests[guestIndex] = { ...updatedGuests[guestIndex], status };
+
+      setGuests(updatedGuests);
+    }
+
+    console.log("After update:", todaysGuestList);
   };
 
   // Update daily statistics
@@ -166,6 +193,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         estimatedWaitingTime,
         addGuest,
         updateGuestStatus,
+        updateWaitingStatus,
         getDailyStats,
         updateSettings,
         inLineGuests,
@@ -183,7 +211,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAppContext = () => {
   const context = useContext(AppContext);
   if (context === undefined) {
-    throw new Error('useAppContext must be used within an AppProvider');
+    throw new Error("useAppContext must be used within an AppProvider");
   }
   return context;
 };

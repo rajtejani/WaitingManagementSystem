@@ -166,13 +166,13 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
               ) : null}
             </View>
 
-            <TextInput
+            {/* <TextInput
               style={styles.input}
               value={waitingTime.toString()}
               onChangeText={(text) => setWaitingTime(parseInt(text))}
               keyboardType="phone-pad"
               placeholder="Enter Waiting Time"
-            />
+            /> */}
             <View style={styles.formGroup}>
               {/* <Text style={styles.label}>Number of Guests</Text>   */}
               <TextInput

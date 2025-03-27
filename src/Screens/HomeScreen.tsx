@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -7,13 +7,16 @@ import AddGuestModal from "../components/AddGuestModal";
 import Badge from "../components/Badge";
 import CompletedList from "../components/CompletedList";
 import WaitingList from "../components/WaitingList";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserRolesTypes } from "../utils/common.utils";
 
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
     "upcoming"
   );
   const [isAddModalVisible, setAddModalVisible] = useState(false);
-  const { waitingGuests, completedGuests, userRole } = useAppContext();
+  const { waitingGuests, completedGuests, userRole, updateUserRole } =
+    useAppContext();
   const upcomingGuestsCount = waitingGuests.filter(
     (guest) => guest.status
   ).length;
@@ -21,6 +24,15 @@ const HomeScreen = () => {
     (guest) => guest.status
   ).length;
 
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const storedUserRole = await AsyncStorage.getItem("userRole");
+      if (storedUserRole) {
+        updateUserRole(storedUserRole); // Update the userRole state here
+      }
+    };
+    fetchUserRole();
+  }, []);
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -29,13 +41,13 @@ const HomeScreen = () => {
             <Text style={styles.title}>
               {activeTab === "upcoming"
                 ? "Guest Waiting List"
-                : "Completed List"}
+                : "Guest Completed List"}
             </Text>
             <Text style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>
               {userRole}
             </Text>
           </View>
-          {userRole !== "Table Manager" && (
+          {userRole !== UserRolesTypes.TableManager && (
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => setAddModalVisible(true)}
@@ -45,44 +57,42 @@ const HomeScreen = () => {
           )}
         </View>
 
-        {/* {activeTab === "upcoming" && (
-          <View style={styles.waitingTimeContainer}>
-            <Text style={styles.waitingTimeLabel}>Waiting Time</Text>
-            <Text style={styles.waitingTimeValue}>
-              {estimatedWaitingTime} Mins
-            </Text>
-          </View>
-        )} */}
-
         <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "upcoming" && styles.activeTab]}
-            onPress={() => setActiveTab("upcoming")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "upcoming" && styles.activeTabText,
-              ]}
+          {userRole !== UserRolesTypes.TableManager && (
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "upcoming" && styles.activeTab]}
+              onPress={() => setActiveTab("upcoming")}
             >
-              Upcoming
-            </Text>
-            <Badge count={upcomingGuestsCount} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "completed" && styles.activeTab]}
-            onPress={() => setActiveTab("completed")}
-          >
-            <Text
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "upcoming" && styles.activeTabText,
+                ]}
+              >
+                Upcoming
+              </Text>
+              <Badge count={upcomingGuestsCount} />
+            </TouchableOpacity>
+          )}
+          {userRole !== UserRolesTypes.TableManager && (
+            <TouchableOpacity
               style={[
-                styles.tabText,
-                activeTab === "completed" && styles.activeTabText,
+                styles.tab,
+                activeTab === "completed" && styles.activeTab,
               ]}
+              onPress={() => setActiveTab("completed")}
             >
-              Completed
-            </Text>
-            <Badge count={completedGuestsCount} />
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === "completed" && styles.activeTabText,
+                ]}
+              >
+                Completed
+              </Text>
+              <Badge count={completedGuestsCount} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.listContainer}>

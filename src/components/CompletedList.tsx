@@ -1,9 +1,9 @@
-import { format, parseISO } from 'date-fns';
-import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useAppContext } from '../Context/AppContext';
-import { Guest } from '../types';
+import { format, parseISO } from "date-fns";
+import React from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { useAppContext } from "../Context/AppContext";
+import { Guest } from "../types";
 
 const CompletedList = () => {
   const { completedGuests } = useAppContext();
@@ -17,25 +17,25 @@ const CompletedList = () => {
     return 0;
   });
 
-  const getStatusColor = (status: Guest['status']) => {
+  const getStatusColor = (status: Guest["status"]) => {
     switch (status) {
-      case 'seated':
-        return '#4CAF50';
-      case 'cancelled':
-        return '#F44336';
+      case "seated":
+        return "#4CAF50";
+      case "cancelled":
+        return "#F44336";
       default:
-        return '#999';
+        return "#999";
     }
   };
 
-  const getStatusIcon = (status: Guest['status']) => {
+  const getStatusIcon = (status: Guest["status"]) => {
     switch (status) {
-      case 'seated':
-        return 'check-circle';
-      case 'cancelled':
-        return 'cancel';
+      case "seated":
+        return "check-circle";
+      case "cancelled":
+        return "cancel";
       default:
-        return 'info';
+        return "info";
     }
   };
 
@@ -54,7 +54,7 @@ const CompletedList = () => {
             </Text>
             {item.processedAt && (
               <Text style={styles.timeText}>
-                {format(parseISO(item.processedAt), 'MMM d, h:mm a')}
+                {format(parseISO(item.processedAt), "MMM d, h:mm a")}
               </Text>
             )}
           </View>
@@ -74,13 +74,12 @@ const CompletedList = () => {
       </View>
     );
   };
-
   return (
     <View style={styles.container}>
       {sortedGuests.length > 0 ? (
         <FlatList
           data={sortedGuests}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
         />
@@ -105,78 +104,78 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   guestItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 16,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 8,
     marginBottom: 12,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   guestInfo: {
     flex: 1,
   },
   guestName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 4,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
   guestPhone: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 8,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
   detailsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   numberOfGuests: {
     fontSize: 13,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
 
-    color: '#666',
+    color: "#666",
   },
   timeText: {
     fontSize: 12,
-    color: '#999',
+    color: "#999",
   },
   statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 16,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     marginLeft: 4,
-    fontFamily: 'Poppins',
+    fontFamily: "Poppins",
   },
   emptyStateContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyStateText: {
     fontSize: 18,
-    fontFamily: 'Poppins',
-    color: '#666',
+    fontFamily: "Poppins",
+    color: "#666",
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: '#999',
-    fontFamily: 'Poppins',
+    color: "#999",
+    fontFamily: "Poppins",
   },
 });
 

@@ -1,5 +1,5 @@
 import { format, parseISO } from "date-fns";
-import React from "react";
+import React, { useState } from "react";
 import {
   Alert,
   FlatList,
@@ -12,30 +12,36 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAppContext } from "../Context/AppContext";
-import { Guest } from "../types";
+import { Guest, StatusTypes } from "../types";
+import { UserRolesTypes } from "../utils/common.utils";
 
 const WaitingList = () => {
-  const { waitingGuests, updateGuestStatus, inLineGuests, setInLineGuests } =
-    useAppContext();
-
-  const getStatusColor = (status: Guest["status"]) => {
+  const {
+    waitingGuests,
+    updateGuestStatus,
+    inLineGuests,
+    setInLineGuests,
+    updateWaitingStatus,
+    userRole,
+  } = useAppContext();
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "seated":
         return "#4CAF50";
+      case "confirmed":
+        return "#6A96F2";
       case "cancelled":
         return "#F44336";
       default:
         return "#ffc107";
     }
   };
-
   const getStatusIcon = (status: Guest["status"]) => {
     switch (status) {
       default:
         return "circle";
     }
   };
-
   const handleCall = (phoneNumber: string) => {
     const telUrl = `tel:${phoneNumber}`;
     Linking.canOpenURL(telUrl)
@@ -60,30 +66,41 @@ const WaitingList = () => {
         {
           text: "Yes",
           style: "destructive",
-          onPress: () => updateGuestStatus(id, "cancelled"),
+          onPress: () => updateGuestStatus(id, StatusTypes.cancelled),
         },
       ]
     );
   };
+
+  // const handleInLine = (id: string) => {
+  //   updateWaitingStatus(id, "Confirmed");
+  //   setInLineGuests([...inLineGuests, id]);
+  // };
   const handleInLine = (id: string) => {
-    updateGuestStatus(id, "waiting");
-    setInLineGuests([...inLineGuests, id]);
+    updateWaitingStatus(id, StatusTypes.Confirmed);
+
+    setInLineGuests((prev: string[]) => {
+      const newList = [...(prev ?? []), id];
+      console.log("Updated inLineGuests:", newList); // Debugging
+      return newList;
+    });
   };
 
   const handleComplete = (id: string) => {
     // Move to seated status and remove from inLine state
-    updateGuestStatus(id, "seated");
+    updateWaitingStatus(id, StatusTypes.seated);
     setInLineGuests(inLineGuests.filter((guestId) => guestId !== id));
   };
   // const handleSeated = (id: string) => {
-  //   updateGuestStatus(id, 'seated');
+  //   updateGuestStatus(id, "seated");
+  //   setInLineGuests(inLineGuests.filter((guestId) => guestId !== id));
   // };
-
   const renderItem = ({ item }: { item: Guest }) => {
     const statusColor = getStatusColor(item.status);
     const statusIcon = getStatusIcon(item.status);
-    // const waitedTime = calculateWaitedTime(item.entryTime);
+
     const isInLine = inLineGuests.includes(item._id);
+
     return (
       <View style={[styles.guestItem]}>
         <View style={styles.guestDetails}>
@@ -129,7 +146,8 @@ const WaitingList = () => {
                         style={[styles.icon]}
                       />
                       <Text style={[styles.timeText]}>
-                        {item.waitingTime} min
+                        {" "}
+                        {format(parseISO(`${item.waitingTime}`), "hh:mm")}
                       </Text>
                     </View>
                   </View>
@@ -137,19 +155,17 @@ const WaitingList = () => {
                 <View
                   style={[
                     styles.statusContainer,
-                    {
-                      backgroundColor: `${statusColor}20`,
-                      borderColor: `${statusColor}`,
-                    },
+                    { backgroundColor: `${statusColor}20` },
+                    { borderColor: statusColor },
                   ]}
                 >
                   <MaterialIcons
                     name={statusIcon}
-                    size={10}
+                    size={16}
                     color={statusColor}
                   />
                   <Text style={[styles.statusText, { color: statusColor }]}>
-                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                    {item.status}
                   </Text>
                 </View>
               </View>
@@ -173,18 +189,20 @@ const WaitingList = () => {
                   <Text style={styles.completeText}>Complete</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={styles.callButton}
-                onPress={() => handleCall(item.phoneNumber)}
-              >
-                <Ionicons
-                  name="call-outline"
-                  size={20}
-                  color="#FFF"
-                  style={styles.callIcon}
-                />
-                <Text style={styles.callText}>Call</Text>
-              </TouchableOpacity>
+              {userRole !== UserRolesTypes.TableManager && (
+                <TouchableOpacity
+                  style={styles.callButton}
+                  onPress={() => handleCall(item.phoneNumber)}
+                >
+                  <Ionicons
+                    name="call-outline"
+                    size={20}
+                    color="#FFF"
+                    style={styles.callIcon}
+                  />
+                  <Text style={styles.callText}>Call</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>
@@ -361,6 +379,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inLineText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "center",
+    fontFamily: "Poppins",
+  },
+  seatedButton: {
+    backgroundColor: "grey",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+  },
+  seatedText: {
     color: "#FFF",
     fontSize: 14,
     fontWeight: "bold",

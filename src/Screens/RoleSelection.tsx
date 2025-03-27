@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MaterialIcons from "react-native-vector-icons/Feather";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAppContext } from "../Context/AppContext";
@@ -7,6 +7,16 @@ import { useAppContext } from "../Context/AppContext";
 export const RoleSelection = ({ navigation }: any) => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const { updateUserRole } = useAppContext();
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const storedUserRole = await AsyncStorage.getItem("userRole");
+      if (storedUserRole) {
+        navigation.navigate("Home");
+      }
+    };
+    checkUserRole();
+  }, [navigation]);
   const saveRole = async () => {
     if (selectedRole) {
       await AsyncStorage.setItem("userRole", selectedRole);
@@ -15,6 +25,7 @@ export const RoleSelection = ({ navigation }: any) => {
       updateUserRole(selectedRole);
     }
   };
+
   return (
     <View style={styles.container}>
       <Image
@@ -22,7 +33,7 @@ export const RoleSelection = ({ navigation }: any) => {
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.subtitle}>Welcome to WaitList</Text>
+      <Text style={styles.subtitle}>Welcome</Text>
       <Text style={styles.subtext}>
         Manage your restaurant waiting list efficiently
       </Text>
@@ -84,7 +95,13 @@ export const RoleSelection = ({ navigation }: any) => {
         onPress={saveRole}
         disabled={!selectedRole}
       >
-        <Text style={styles.continueText}>Continue →</Text>
+        <Text style={styles.continueText}>Continue</Text>
+        <MaterialIcons
+          name="arrow-right"
+          size={20}
+          color={"#fff"}
+          style={styles.arrowIcon}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -93,7 +110,7 @@ export const RoleSelection = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    padding: 20,
+    paddingHorizontal: 26,
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -181,8 +198,14 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: "#E73E1F",
     width: "100%",
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
+  },
+  arrowIcon: {
+    marginLeft: 8,
+    fontWeight: "bold",
   },
   disabledButton: {
     backgroundColor: "#ccc",

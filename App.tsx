@@ -3,10 +3,11 @@ import { createStackNavigator } from "@react-navigation/stack";
 import React from "react";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AppProvider } from "./src/Context/AppContext";
+import { AppProvider, useAppContext } from "./src/Context/AppContext";
 import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
 import { RoleSelection } from "./src/Screens/RoleSelection";
-import { SplashScreen } from "./src/Screens/SplashScreen";
+import TableManagerPage from "./src/Screens/TableManagerPage";
+import HomeScreen from "./src/Screens/HomeScreen";
 
 const Stack = createStackNavigator();
 
@@ -16,11 +17,7 @@ export default function App() {
       <SafeAreaProvider>
         <AppProvider>
           <NavigationContainer>
-            <Stack.Navigator
-              initialRouteName="Splash"
-              screenOptions={{ headerShown: false }}
-            >
-              <Stack.Screen name="Splash" component={SplashScreen} />
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
               <Stack.Screen name="Main" component={RoleSelection} />
               <Stack.Screen name="Home" component={BottomTabNavigator} />
             </Stack.Navigator>
