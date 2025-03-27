@@ -1,12 +1,12 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import React from "react";
-import { View } from 'react-native';
+import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppProvider } from "./src/Context/AppContext";
 import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
-import { SplashScreen } from "./src/Screens/SplashScreen";
 import { RoleSelection } from "./src/Screens/RoleSelection";
+import { SplashScreen } from "./src/Screens/SplashScreen";
 
 const Stack = createStackNavigator();
 
