@@ -1,7 +1,9 @@
 import { format, parseISO } from "date-fns";
-import React, { useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Alert,
+  Animated,
+  Easing,
   FlatList,
   Linking,
   StyleSheet,
@@ -9,12 +11,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import NativeHapticFeedback, {
+  HapticFeedbackTypes,
+  HapticOptions,
+} from "react-native-haptic-feedback";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAppContext } from "../Context/AppContext";
 import { Guest, StatusTypes } from "../types";
+import Sound from "react-native-sound";
 import { UserRolesTypes } from "../utils/common.utils";
-
 const WaitingList = () => {
   const {
     waitingGuests,
@@ -24,25 +30,76 @@ const WaitingList = () => {
     updateWaitingStatus,
     userRole,
   } = useAppContext();
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "seated":
-        return "#4CAF50";
-      case "confirmed":
-        return "#6A96F2";
-      case "cancelled":
-        return "#F44336";
-      default:
-        return "#ffc107";
-    }
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const defaultOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
   };
-  const getStatusIcon = (status: Guest["status"]) => {
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.ease),
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const RNHapticFeedback = {
+    trigger(
+      type:
+        | keyof typeof HapticFeedbackTypes
+        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
+      options: HapticOptions = {}
+    ) {
+      try {
+        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
+      } catch {
+        console.warn("RNReactNativeHapticFeedback is not available");
+      }
+    },
+  };
+  const successSound = new Sound(
+    "my_file_name.mp3",
+    Sound.MAIN_BUNDLE,
+    (error) => {
+      if (error) {
+        console.log("Failed to load the sound", error);
+      }
+    }
+  );
+  const playSound = () => {
+    successSound.play((success) => {
+      if (!success) {
+        console.log("Sound playback failed");
+      }
+    });
+  };
+  const getStatusColor = (status: StatusTypes) => {
     switch (status) {
-      default:
-        return "circle";
+      case StatusTypes.Waiting:
+        return "#ffc107";
+      case StatusTypes.Confirmed:
+        return "#6A96F2";
+      case StatusTypes.Seated:
+        return "#4CAF50";
+      case StatusTypes.Cancelled:
+        return "#F44336";
     }
   };
   const handleCall = (phoneNumber: string) => {
+    RNHapticFeedback.trigger("impactMedium", defaultOptions);
+    playSound();
     const telUrl = `tel:${phoneNumber}`;
     Linking.canOpenURL(telUrl)
       .then((supported) => {
@@ -66,17 +123,16 @@ const WaitingList = () => {
         {
           text: "Yes",
           style: "destructive",
-          onPress: () => updateGuestStatus(id, StatusTypes.cancelled),
+          onPress: () => updateGuestStatus(id, StatusTypes.Cancelled),
         },
       ]
     );
   };
 
-  // const handleInLine = (id: string) => {
-  //   updateWaitingStatus(id, "Confirmed");
-  //   setInLineGuests([...inLineGuests, id]);
-  // };
   const handleInLine = (id: string) => {
+    RNHapticFeedback.trigger("impactMedium", defaultOptions);
+    playSound();
+
     updateWaitingStatus(id, StatusTypes.Confirmed);
 
     setInLineGuests((prev: string[]) => {
@@ -87,19 +143,23 @@ const WaitingList = () => {
   };
 
   const handleComplete = (id: string) => {
+    RNHapticFeedback.trigger("impactMedium", defaultOptions);
+    playSound();
+
     // Move to seated status and remove from inLine state
-    updateWaitingStatus(id, StatusTypes.seated);
+    updateWaitingStatus(id, StatusTypes.Seated);
     setInLineGuests(inLineGuests.filter((guestId) => guestId !== id));
   };
-  // const handleSeated = (id: string) => {
-  //   updateGuestStatus(id, "seated");
-  //   setInLineGuests(inLineGuests.filter((guestId) => guestId !== id));
-  // };
+
   const renderItem = ({ item }: { item: Guest }) => {
     const statusColor = getStatusColor(item.status);
-    const statusIcon = getStatusIcon(item.status);
-
     const isInLine = inLineGuests.includes(item._id);
+
+    const formatWaitingTime = (waitingTime: number) => {
+      const hours = Math.floor(waitingTime / 60);
+      const minutes = waitingTime % 60;
+      return `${hours}h ${minutes}m`;
+    };
 
     return (
       <View style={[styles.guestItem]}>
@@ -146,28 +206,39 @@ const WaitingList = () => {
                         style={[styles.icon]}
                       />
                       <Text style={[styles.timeText]}>
-                        {" "}
-                        {format(parseISO(`${item.waitingTime}`), "hh:mm")}
+                        {formatWaitingTime(item.waitingTime)}
                       </Text>
                     </View>
                   </View>
                 </View>
-                <View
+                <Animated.View
                   style={[
-                    styles.statusContainer,
-                    { backgroundColor: `${statusColor}20` },
-                    { borderColor: statusColor },
+                    styles.innerCircle,
+                    { transform: [{ scale: scaleAnim }] },
                   ]}
                 >
-                  <MaterialIcons
-                    name={statusIcon}
-                    size={16}
-                    color={statusColor}
-                  />
-                  <Text style={[styles.statusText, { color: statusColor }]}>
-                    {item.status}
-                  </Text>
-                </View>
+                  <View
+                    style={[
+                      styles.statusContainer,
+                      { backgroundColor: `${statusColor}20` },
+                      { borderColor: statusColor },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.statusIcon,
+                        {
+                          backgroundColor: statusColor,
+                        },
+                      ]}
+                    />
+                    <View>
+                      <Text style={[styles.statusText, { color: statusColor }]}>
+                        {item.status}
+                      </Text>
+                    </View>
+                  </View>
+                </Animated.View>
               </View>
             </View>
           </View>
@@ -262,7 +333,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  // statusContainer: {
+  //   flexDirection: "row",
+  //   position: "relative",
+  //   alignItems: "center",
+  //   justifyContent: "center",
+
+  //   borderRadius: 20,
+  //   borderWidth: 1,
+  // },
   statusContainer: {
+    position: "relative",
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 3,
@@ -270,10 +351,24 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
+  innerCircle: {
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 10,
+    borderRadius: 50,
+  },
+  statusIcon: {
+    width: 8,
+    height: 8,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+
   statusText: {
     fontSize: 12,
     fontWeight: "bold",
-    marginLeft: 2,
+    marginLeft: 3,
     fontFamily: "Poppins",
   },
   completeButton: {

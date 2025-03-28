@@ -1,4 +1,3 @@
-import parsePhoneNumber from "libphonenumber-js/max";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 import axios from "axios";
@@ -29,7 +28,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
   const [numberOfGuest, setNumberOfGuest] = useState("");
   const [numberOfGuests, setnumberOfGuests] = useState<number | null>(null);
   const [willingToShare, setWillingToShare] = useState(false);
-  const [waitingTime, setWaitingTime] = useState(20);
+  const [waitingTime, setWaitingTime] = useState<number | null>(null);
 
   const resetForm = () => {
     setName("");
@@ -45,36 +44,19 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
     onClose();
   };
 
-  const validatePhoneNumber = (phone: string): boolean => {
-    const phoneWithCountryCode = phone.startsWith("+") ? phone : `${phone}`;
-    const phoneNumber = parsePhoneNumber(phoneWithCountryCode, "IN");
-    // console.log(phoneNumber?.getType());
-
-    try {
-      if (!phoneNumber?.isValid() || phoneNumber?.getType() !== "MOBILE") {
-        setPhoneError("Please enter a valid phone number");
-        return false;
-      }
-      setPhoneError("");
-      return true;
-    } catch (error) {
-      setPhoneError("Invalid phone number");
-      return false;
-    }
-  };
-
   const handleAddGuest = async () => {
     if (!name.trim()) {
       Alert.alert("Error", "Please enter guest name");
       return;
     }
 
-    if (!validatePhoneNumber(phoneNumber.trim())) {
-      Alert.alert("Error", phoneError || "Invalid phone number");
-      return;
-    }
     if (!phoneNumber.trim()) {
       Alert.alert("Error", "Please enter guest phone number");
+      return;
+    }
+
+    if (waitingTime === null) {
+      Alert.alert("Error", "Please enter waiting time");
       return;
     }
 
@@ -113,7 +95,11 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
     setPhoneNumber(cleaned);
 
     // Clear error when user is typing
-    if (phoneError) setPhoneError("");
+    if (cleaned.length !== 10) {
+      setPhoneError("Please enter a valid phone number");
+    } else {
+      setPhoneError("");
+    }
   };
 
   const handlenumberOfGuestsSelect = (count: number) => {
@@ -123,11 +109,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
       setWillingToShare(false);
     }
   };
-  const handlePhoneBlur = () => {
-    if (phoneNumber.trim()) {
-      validatePhoneNumber(phoneNumber.trim());
-    }
-  };
+
   return (
     <Modal
       visible={visible}
@@ -141,7 +123,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
             {/* <Text style={styles.modalTitle}>Add to Waiting List</Text>   */}
 
             <View style={styles.formGroup}>
-              {/* <Text style={styles.label}>Guest Name</Text> */}
+              <Text style={styles.label}>Guest Name</Text>
               <TextInput
                 style={styles.input}
                 value={name}
@@ -151,12 +133,11 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
             </View>
 
             <View style={styles.formGroup}>
-              {/* <Text style={styles.label}>Mobile Number</Text> */}
+              <Text style={styles.label}>Mobile Number</Text>
               <TextInput
                 style={[styles.input, phoneError ? styles.inputError : null]}
                 value={phoneNumber}
                 onChangeText={handlePhoneChange}
-                onBlur={handlePhoneBlur}
                 placeholder="Enter mobile number"
                 keyboardType="phone-pad"
                 maxLength={10}
@@ -165,16 +146,24 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
                 <Text style={styles.errorText}>{phoneError}</Text>
               ) : null}
             </View>
-
-            {/* <TextInput
-              style={styles.input}
-              value={waitingTime.toString()}
-              onChangeText={(text) => setWaitingTime(parseInt(text))}
-              keyboardType="phone-pad"
-              placeholder="Enter Waiting Time"
-            /> */}
             <View style={styles.formGroup}>
-              {/* <Text style={styles.label}>Number of Guests</Text>   */}
+              <Text style={styles.label}>Waiting Time</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="phone-pad"
+                placeholder="Enter Waiting Time"
+                value={waitingTime?.toString()}
+                onChangeText={(text) => {
+                  if (text !== "") {
+                    setWaitingTime(parseInt(text));
+                  } else {
+                    setWaitingTime(null);
+                  }
+                }}
+              />
+            </View>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Number of Guests</Text>
               <TextInput
                 style={styles.input}
                 value={numberOfGuest}

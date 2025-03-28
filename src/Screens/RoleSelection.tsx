@@ -1,28 +1,42 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CommonActions } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import MaterialIcons from "react-native-vector-icons/Feather";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import MaterialIcons from "react-native-vector-icons/Feather";
 import { useAppContext } from "../Context/AppContext";
+import { UserRolesTypes } from "../utils/common.utils";
 
 export const RoleSelection = ({ navigation }: any) => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const { updateUserRole } = useAppContext();
+  const [isCheckingRole, setIsCheckingRole] = useState(false);
 
   useEffect(() => {
     const checkUserRole = async () => {
       const storedUserRole = await AsyncStorage.getItem("userRole");
       if (storedUserRole) {
-        navigation.navigate("Home");
+        updateUserRole(storedUserRole);
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "Home" }],
+          })
+        );
       }
     };
     checkUserRole();
   }, [navigation]);
+
   const saveRole = async () => {
     if (selectedRole) {
       await AsyncStorage.setItem("userRole", selectedRole);
-      navigation.navigate("Home");
-      // Update the AppContext with the selected role
       updateUserRole(selectedRole);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        })
+      );
     }
   };
 
@@ -42,9 +56,9 @@ export const RoleSelection = ({ navigation }: any) => {
         <TouchableOpacity
           style={[
             styles.button,
-            selectedRole === "Waiting Manager" && styles.selected,
+            selectedRole !== UserRolesTypes.TableManager && styles.selected,
           ]}
-          onPress={() => setSelectedRole("Waiting Manager")}
+          onPress={() => setSelectedRole(UserRolesTypes.WaitingManager)}
         >
           <View style={styles.buttonContent}>
             <View style={styles.icon}>
@@ -52,7 +66,8 @@ export const RoleSelection = ({ navigation }: any) => {
                 name="list"
                 size={24}
                 style={[
-                  selectedRole === "Waiting Manager" && styles.selectedIcon,
+                  selectedRole !== UserRolesTypes.TableManager &&
+                    styles.selectedIcon,
                 ]}
               />
             </View>
@@ -67,9 +82,9 @@ export const RoleSelection = ({ navigation }: any) => {
         <TouchableOpacity
           style={[
             styles.button,
-            selectedRole === "Table Manager" && styles.selected,
+            selectedRole === UserRolesTypes.TableManager && styles.selected,
           ]}
-          onPress={() => setSelectedRole("Table Manager")}
+          onPress={() => setSelectedRole(UserRolesTypes.TableManager)}
         >
           <View style={styles.buttonContent}>
             <View style={styles.icon}>
@@ -77,7 +92,8 @@ export const RoleSelection = ({ navigation }: any) => {
                 name="coffee"
                 size={24}
                 style={[
-                  selectedRole === "Table Manager" && styles.selectedIcon,
+                  selectedRole === UserRolesTypes.TableManager &&
+                    styles.selectedIcon,
                 ]}
               />
             </View>
@@ -215,5 +231,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "white",
+  },
+  loader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

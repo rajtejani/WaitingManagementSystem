@@ -18,8 +18,8 @@ interface AppContextType {
   addGuest: (
     guest: Omit<Guest, "entryTime" | "status" | "waitingTime">
   ) => Promise<void>;
-  updateGuestStatus: (id: string, status: Guest["status"]) => Promise<void>;
-  updateWaitingStatus: (id: string, status: Guest["status"]) => Promise<void>;
+  updateGuestStatus: (id: string, status: StatusTypes) => Promise<void>;
+  updateWaitingStatus: (id: string, status: StatusTypes) => Promise<void>;
   getDailyStats: (date: string) => DailyStats | undefined;
   updateSettings: (settings: AppSettings) => Promise<void>;
   inLineGuests: string[];
@@ -47,13 +47,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Calculated properties
   const waitingGuests = todaysGuestList.filter(
     (guest) =>
-      guest.status === StatusTypes.waiting ||
+      guest.status === StatusTypes.Waiting ||
       guest.status === StatusTypes.Confirmed
   );
   const completedGuests = todaysGuestList.filter(
     (guest) =>
-      guest.status === StatusTypes.seated ||
-      guest.status === StatusTypes.cancelled
+      guest.status === StatusTypes.Seated ||
+      guest.status === StatusTypes.Cancelled
   );
 
   // Calculate estimated waiting time based on settings and current waitlist
@@ -133,7 +133,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const newGuest: Guest = {
       ...guestData,
       entryTime: now.toISOString(),
-      status: StatusTypes.waiting,
+      status: StatusTypes.Waiting,
       waitingTime: estimatedWaitingTime,
     };
   };
@@ -145,9 +145,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       setGuests([...todaysGuestList]);
     }
     // Update daily stats if guest is seated
-    if (status === "seated") {
+    if (status === StatusTypes.Seated) {
       const guest = todaysGuestList.find(
-        (g) => g._id === id && g.status === "seated"
+        (g) => g._id === id && g.status === StatusTypes.Seated
       );
       if (guest) {
         const today = new Date().toISOString().split("T")[0];

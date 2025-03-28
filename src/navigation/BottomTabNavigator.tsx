@@ -1,9 +1,10 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { useAppContext } from "../Context/AppContext";
 import HistoryScreen from "../Screens/HistoryScreen";
 import HomeScreen from "../Screens/HomeScreen";
-import { useAppContext } from "../Context/AppContext";
+import LogInScreen from "../Screens/LogInScreen";
 import { UserRolesTypes } from "../utils/common.utils";
 
 const Tab = createBottomTabNavigator();
@@ -45,16 +46,25 @@ const BottomTabNavigator = () => {
               ),
             }}
           />
+          <Tab.Screen
+            name="Login"
+            component={LogInScreen}
+            options={{
+              tabBarIcon: ({ color }) => (
+                <MaterialIcons name="login" size={24} color={color} />
+              ),
+            }}
+          />
 
           {/* <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <MaterialIcons name="settings" size={24} color={color} />
-          ),
-        }}
-      /> */}
+            name="Settings"
+            component={SettingsScreen}
+            options={{
+              tabBarIcon: ({ color }) => (
+                <MaterialIcons name="settings" size={24} color={color} />
+              ),
+            }}
+          /> */}
         </Tab.Navigator>
       )}
     </>

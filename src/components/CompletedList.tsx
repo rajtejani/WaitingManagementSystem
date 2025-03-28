@@ -3,7 +3,7 @@ import React from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAppContext } from "../Context/AppContext";
-import { Guest } from "../types";
+import { Guest, StatusTypes } from "../types";
 
 const CompletedList = () => {
   const { completedGuests } = useAppContext();
@@ -17,22 +17,22 @@ const CompletedList = () => {
     return 0;
   });
 
-  const getStatusColor = (status: Guest["status"]) => {
+  const getStatusColor = (status: StatusTypes) => {
     switch (status) {
-      case "seated":
+      case StatusTypes.Seated:
         return "#4CAF50";
-      case "cancelled":
+      case StatusTypes.Cancelled:
         return "#F44336";
       default:
         return "#999";
     }
   };
 
-  const getStatusIcon = (status: Guest["status"]) => {
+  const getStatusIcon = (status: StatusTypes) => {
     switch (status) {
-      case "seated":
+      case StatusTypes.Seated:
         return "check-circle";
-      case "cancelled":
+      case StatusTypes.Cancelled:
         return "cancel";
       default:
         return "info";
@@ -66,7 +66,7 @@ const CompletedList = () => {
             { backgroundColor: `${statusColor}20` },
           ]}
         >
-          <MaterialIcons name={statusIcon} size={16} color={statusColor} />
+          <MaterialIcons name={statusIcon} size={14} color={statusColor} />
           <Text style={[styles.statusText, { color: statusColor }]}>
             {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
           </Text>
@@ -104,16 +104,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   guestItem: {
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
+
     flexDirection: "row",
     padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 8,
     marginBottom: 12,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
     justifyContent: "space-between",
     alignItems: "center",
   },
@@ -150,14 +147,14 @@ const styles = StyleSheet.create({
   statusContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 3,
+    paddingHorizontal: 7,
     borderRadius: 16,
   },
   statusText: {
     fontSize: 12,
     fontWeight: "500",
-    marginLeft: 4,
+    marginLeft: 3,
     fontFamily: "Poppins",
   },
   emptyStateContainer: {

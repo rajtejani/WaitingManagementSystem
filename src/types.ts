@@ -1,10 +1,8 @@
-// types.ts - Type definitions for the app
-
 export enum StatusTypes {
-  waiting = "waiting",
-  seated = "seated",
-  cancelled = "cancelled",
-  Confirmed = "confirmed",
+  Waiting = "waiting",
+  Seated = "Seated",
+  Cancelled = "Cancelled",
+  Confirmed = "Confirmed",
 }
 export interface Guest {
   _id: string;
