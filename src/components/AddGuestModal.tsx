@@ -129,6 +129,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
                 value={name}
                 onChangeText={setName}
                 placeholder="Enter guest name"
+                placeholderTextColor={"#222222"}
               />
             </View>
 
@@ -139,6 +140,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
                 value={phoneNumber}
                 onChangeText={handlePhoneChange}
                 placeholder="Enter mobile number"
+                placeholderTextColor={"#222222"}
                 keyboardType="phone-pad"
                 maxLength={10}
               />
@@ -152,6 +154,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
                 style={styles.input}
                 keyboardType="phone-pad"
                 placeholder="Enter Waiting Time"
+                placeholderTextColor={"#222222"}
                 value={waitingTime?.toString()}
                 onChangeText={(text) => {
                   if (text !== "") {
@@ -175,6 +178,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
                 }}
                 keyboardType="phone-pad"
                 placeholder="Enter no. of guests"
+                placeholderTextColor={"#222222"}
               />
               <View style={styles.numberOfGuestsContainer}>
                 {[2, 4, 6].map((count) => (

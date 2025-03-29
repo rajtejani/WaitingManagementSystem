@@ -1,14 +1,14 @@
 import React, { useState } from "react";
-import { Modal } from "react-native";
 import {
   Alert,
+  FlatList,
+  Modal,
+  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  FlatList,
-  SafeAreaView,
 } from "react-native";
 
 interface Manager {
@@ -64,6 +64,7 @@ const SettingsScreen = () => {
             value={newManagerName}
             onChangeText={setNewManagerName}
             placeholder="Enter manager name"
+            placeholderTextColor={"#222222"}
           />
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -111,6 +112,7 @@ const SettingsScreen = () => {
                   value={newManagerName}
                   onChangeText={setNewManagerName}
                   placeholder="Enter name"
+                  placeholderTextColor={"#222222"}
                 />
                 <View style={styles.buttonContainer}>
                   <TouchableOpacity

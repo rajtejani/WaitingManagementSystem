@@ -29,7 +29,7 @@ const LogInScreen = () => {
   return (
     <>
       <View style={styles.container}>
-        <Text style={styles.header}>Log In</Text>
+        <Text style={styles.header}>Welcome to MOG</Text>
         <View style={styles.formContent}></View>
         <View style={styles.form}>
           <View style={styles.formGroup}>
@@ -38,6 +38,7 @@ const LogInScreen = () => {
               style={styles.input}
               value={name}
               placeholder="Enter name"
+              placeholderTextColor={"#222222"}
               onChangeText={(text) => setName(text)}
             />
             {nameError ? (
@@ -50,6 +51,7 @@ const LogInScreen = () => {
               style={styles.input}
               value={password}
               placeholder="Enter password"
+              placeholderTextColor={"#222222"}
               onChangeText={(text) => setPassword(text)}
             />
             {passwordError ? (
