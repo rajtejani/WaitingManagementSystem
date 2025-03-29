@@ -45,12 +45,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [userRole, setUserRole] = useState<string | null>(null);
 
   // Calculated properties
-  const waitingGuests = todaysGuestList.filter(
+  const waitingGuests = todaysGuestList?.filter(
     (guest) =>
       guest.status === StatusTypes.Waiting ||
       guest.status === StatusTypes.Confirmed
   );
-  const completedGuests = todaysGuestList.filter(
+  const completedGuests = todaysGuestList?.filter(
     (guest) =>
       guest.status === StatusTypes.Seated ||
       guest.status === StatusTypes.Cancelled
@@ -59,7 +59,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   // Calculate estimated waiting time based on settings and current waitlist
   const estimatedWaitingTime = Math.max(
     Math.ceil(
-      (waitingGuests.length / settings.totalTables) *
+      (waitingGuests?.length / settings.totalTables) *
         settings.avgTableTurnaroundTime
     ),
     0
@@ -72,6 +72,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         const response = await axios.get(
           "https://v0-next-js-socket-server-s1.vercel.app/api/guests"
         );
+
         const data = await response.data;
 
         setGuests(data.guests);

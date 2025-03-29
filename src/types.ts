@@ -1,8 +1,9 @@
 export enum StatusTypes {
   Waiting = "waiting",
-  Seated = "Seated",
-  Cancelled = "Cancelled",
-  Confirmed = "Confirmed",
+  Seated = "seated",
+  Cancelled = "cancelled",
+  Confirmed = "confirmed",
+  TableReady = "table ready",
 }
 export interface Guest {
   _id: string;

@@ -8,14 +8,17 @@ import { Guest, StatusTypes } from "../types";
 const CompletedList = () => {
   const { completedGuests } = useAppContext();
 
-  const sortedGuests = [...completedGuests].sort((a, b) => {
-    if (a.processedAt && b.processedAt) {
-      return (
-        new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime()
-      );
-    }
-    return 0;
-  });
+  const sortedGuests = completedGuests
+    ? [...completedGuests].sort((a, b) => {
+        if (a.processedAt && b.processedAt) {
+          return (
+            new Date(b.processedAt).getTime() -
+            new Date(a.processedAt).getTime()
+          );
+        }
+        return 0;
+      })
+    : [];
 
   const getStatusColor = (status: StatusTypes) => {
     switch (status) {

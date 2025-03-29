@@ -6,6 +6,7 @@ import HistoryScreen from "../Screens/HistoryScreen";
 import HomeScreen from "../Screens/HomeScreen";
 import LogInScreen from "../Screens/LogInScreen";
 import { UserRolesTypes } from "../utils/common.utils";
+import SettingsScreen from "../Screens/SettingsScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -46,17 +47,8 @@ const BottomTabNavigator = () => {
               ),
             }}
           />
-          <Tab.Screen
-            name="Login"
-            component={LogInScreen}
-            options={{
-              tabBarIcon: ({ color }) => (
-                <MaterialIcons name="login" size={24} color={color} />
-              ),
-            }}
-          />
 
-          {/* <Tab.Screen
+          <Tab.Screen
             name="Settings"
             component={SettingsScreen}
             options={{
@@ -64,7 +56,7 @@ const BottomTabNavigator = () => {
                 <MaterialIcons name="settings" size={24} color={color} />
               ),
             }}
-          /> */}
+          />
         </Tab.Navigator>
       )}
     </>

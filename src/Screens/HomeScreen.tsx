@@ -17,10 +17,10 @@ const HomeScreen = () => {
   const [isAddModalVisible, setAddModalVisible] = useState(false);
   const { waitingGuests, completedGuests, userRole, updateUserRole } =
     useAppContext();
-  const upcomingGuestsCount = waitingGuests.filter(
+  const upcomingGuestsCount = waitingGuests?.filter(
     (guest) => guest.status
   ).length;
-  const completedGuestsCount = completedGuests.filter(
+  const completedGuestsCount = completedGuests?.filter(
     (guest) => guest.status
   ).length;
 

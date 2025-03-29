@@ -31,28 +31,46 @@ const WaitingList = () => {
     userRole,
   } = useAppContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-          easing: Easing.in(Easing.ease),
-        }),
-      ])
-    ).start();
+    const pulse = () => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.1,
+            duration: 1000,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+            easing: Easing.in(Easing.ease),
+          }),
+        ])
+      ).start();
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacityAnim, {
+            toValue: 0.2, // Fade out
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacityAnim, {
+            toValue: 0.5, // Fade in
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    };
+    pulse();
   }, []);
 
   const RNHapticFeedback = {
@@ -211,34 +229,49 @@ const WaitingList = () => {
                     </View>
                   </View>
                 </View>
-                <Animated.View
+                {/* <Animated.View
                   style={[
-                    styles.innerCircle,
-                    { transform: [{ scale: scaleAnim }] },
+                    styles.statusIcon,
+                    styles.pulseContainer,
+                    { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
+                  ]}
+                > */}
+                <View
+                  style={[
+                    styles.statusContainer,
+                    { backgroundColor: `${statusColor}20` },
+                    { borderColor: statusColor },
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.statusContainer,
-                      { backgroundColor: `${statusColor}20` },
-                      { borderColor: statusColor },
-                    ]}
-                  >
-                    <View
+                  {/* <View
                       style={[
                         styles.statusIcon,
                         {
                           backgroundColor: statusColor,
                         },
                       ]}
-                    />
-                    <View>
-                      <Text style={[styles.statusText, { color: statusColor }]}>
-                        {item.status}
-                      </Text>
-                    </View>
+                    /> */}
+                  <Animated.View
+                    style={[
+                      styles.statusIcon,
+                      {
+                        backgroundColor: statusColor,
+                      },
+                      {
+                        transform: [{ scale: scaleAnim }],
+                        opacity: opacityAnim,
+                      },
+                    ]}
+                  ></Animated.View>
+                  {/* <View style={styles.innerBox} /> */}
+                  <View>
+                    <Text style={[styles.statusText, { color: statusColor }]}>
+                      {item.status.charAt(0).toUpperCase() +
+                        item.status.slice(1)}
+                    </Text>
                   </View>
-                </Animated.View>
+                </View>
+                {/* </Animated.View> */}
               </View>
             </View>
           </View>
@@ -260,6 +293,18 @@ const WaitingList = () => {
                   <Text style={styles.completeText}>Complete</Text>
                 </TouchableOpacity>
               )}
+              {/* <TouchableOpacity
+                style={styles.completeButton}
+                onPress={() => handleInLine(item._id)}
+              >
+                <Text style={styles.completeText}>Table ready</Text>
+              </TouchableOpacity> */}
+              {/* <TouchableOpacity
+                style={styles.completeButton}
+                onPress={() => handleComplete(item._id)}
+              >
+                <Text style={styles.completeText}>Seated</Text>
+              </TouchableOpacity> */}
               {userRole !== UserRolesTypes.TableManager && (
                 <TouchableOpacity
                   style={styles.callButton}
@@ -282,7 +327,7 @@ const WaitingList = () => {
   };
   return (
     <View style={styles.container}>
-      {waitingGuests.length > 0 ? (
+      {waitingGuests?.length > 0 ? (
         <FlatList
           data={waitingGuests}
           keyExtractor={(item) => item._id}
@@ -357,6 +402,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 10,
     borderRadius: 50,
+  },
+  innerBox: {
+    width: 10,
+    height: 10,
+    borderRadius: 50,
+    backgroundColor: "#007AFF",
+    elevation: 5, // Shadow for Android
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
   statusIcon: {
     width: 8,

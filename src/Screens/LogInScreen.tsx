@@ -11,6 +11,7 @@ const LogInScreen = () => {
   const [password, setPassword] = useState("");
   const [nameError, setNameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+
   const handleAddGuest = async () => {
     if (!name.trim()) {
       setNameError("Please enter your username");
@@ -24,6 +25,7 @@ const LogInScreen = () => {
       setPasswordError("");
     }
   };
+
   return (
     <>
       <View style={styles.container}>
@@ -96,7 +98,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#000",
-    borderRadius: 4,
+    borderRadius: 8,
     padding: 12,
     fontSize: 16,
     backgroundColor: "#F6F1E9",
@@ -109,7 +111,7 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: "#E73E1F",
     paddingVertical: 10,
-    borderRadius: 4,
+    borderRadius: 8,
     alignItems: "center",
     marginBottom: 8,
   },

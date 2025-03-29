@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderWidth: 1,
     borderColor: "#E73E1F",
-    borderRadius: 4,
+    borderRadius: 8,
     alignItems: "center",
   },
   numberOfGuestsButtonActive: {
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: "#E73E1F",
     paddingVertical: 10,
-    borderRadius: 4,
+    borderRadius: 8,
     alignItems: "center",
     marginBottom: 8,
   },
