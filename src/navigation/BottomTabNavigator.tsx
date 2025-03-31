@@ -4,18 +4,17 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAppContext } from "../Context/AppContext";
 import HistoryScreen from "../Screens/HistoryScreen";
 import HomeScreen from "../Screens/HomeScreen";
-import LogInScreen from "../Screens/LogInScreen";
 import { UserRolesTypes } from "../utils/common.utils";
-import SettingsScreen from "../Screens/SettingsScreen";
 
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
-  const { userRole } = useAppContext();
+  const { role } = useAppContext();
+
   return (
     <>
-      {userRole === UserRolesTypes.TableManager && <HomeScreen />}
-      {userRole !== UserRolesTypes.TableManager && (
+      {role === UserRolesTypes.TableManager && <HomeScreen />}
+      {role !== UserRolesTypes.TableManager && (
         <Tab.Navigator
           screenOptions={{
             tabBarShowLabel: false,
@@ -48,7 +47,7 @@ const BottomTabNavigator = () => {
             }}
           />
 
-          <Tab.Screen
+          {/* <Tab.Screen
             name="Settings"
             component={SettingsScreen}
             options={{
@@ -56,7 +55,7 @@ const BottomTabNavigator = () => {
                 <MaterialIcons name="settings" size={24} color={color} />
               ),
             }}
-          />
+          /> */}
         </Tab.Navigator>
       )}
     </>

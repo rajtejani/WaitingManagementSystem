@@ -1,41 +1,44 @@
 import { format, parseISO } from "date-fns";
-import React from "react";
+import React, { useMemo } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useAppContext } from "../Context/AppContext";
-import { Guest, StatusTypes } from "../types";
+import { StatusEnum, useAppContext, type Guest } from "../Context/AppContext";
 
 const CompletedList = () => {
-  const { completedGuests } = useAppContext();
+  const { todaysGuest } = useAppContext();
 
-  const sortedGuests = completedGuests
-    ? [...completedGuests].sort((a, b) => {
-        if (a.processedAt && b.processedAt) {
-          return (
-            new Date(b.processedAt).getTime() -
-            new Date(a.processedAt).getTime()
-          );
-        }
-        return 0;
-      })
-    : [];
+  const sortedGuests = useMemo(() => {
+    let guestList = todaysGuest;
+    guestList = guestList.filter((item) =>
+      [StatusEnum.Cancelled, StatusEnum.Seated].includes(item.status)
+    );
 
-  const getStatusColor = (status: StatusTypes) => {
+    return guestList.sort((a, b) => {
+      if (a.entryTime && b.entryTime) {
+        return (
+          new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime()
+        );
+      }
+      return 0;
+    });
+  }, [todaysGuest]);
+
+  const getStatusColor = (status: StatusEnum) => {
     switch (status) {
-      case StatusTypes.Seated:
+      case StatusEnum.Seated:
         return "#4CAF50";
-      case StatusTypes.Cancelled:
+      case StatusEnum.Cancelled:
         return "#F44336";
       default:
         return "#999";
     }
   };
 
-  const getStatusIcon = (status: StatusTypes) => {
+  const getStatusIcon = (status: StatusEnum) => {
     switch (status) {
-      case StatusTypes.Seated:
+      case StatusEnum.Seated:
         return "check-circle";
-      case StatusTypes.Cancelled:
+      case StatusEnum.Cancelled:
         return "cancel";
       default:
         return "info";
@@ -55,9 +58,9 @@ const CompletedList = () => {
             <Text style={styles.numberOfGuests}>
               No. of guests: {item.numberOfGuests}
             </Text>
-            {item.processedAt && (
+            {item.entryTime && (
               <Text style={styles.timeText}>
-                {format(parseISO(item.processedAt), "MMM d, h:mm a")}
+                {format(parseISO(item.entryTime), "MMM d, h:mm a")}
               </Text>
             )}
           </View>

@@ -1,4 +1,4 @@
 export enum UserRolesTypes {
-  TableManager = "Table Manager",
-  WaitingManager = "Waiting Manager",
+  TableManager = "table_manager",
+  WaitingManager = "waiting_manager",
 }

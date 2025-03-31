@@ -1,6 +1,5 @@
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-import axios from "axios";
 import React, { useState } from "react";
 import {
   Alert,
@@ -13,7 +12,9 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { useAppContext } from "../Context/AppContext";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import type { GuestInput } from "../Context/AppContext";
+import { newGuestEntryAPI } from "../apis/guest";
 
 interface AddGuestModalProps {
   visible: boolean;
@@ -21,7 +22,6 @@ interface AddGuestModalProps {
 }
 
 const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
-  const { addGuest } = useAppContext();
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -37,6 +37,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
     setNumberOfGuest("");
     setnumberOfGuests(null);
     setWillingToShare(false);
+    setWaitingTime(null);
   };
 
   const handleClose = () => {
@@ -65,26 +66,24 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
       return;
     }
 
-    const guestData = {
+    const guestData: GuestInput = {
       name: name.trim(),
       phoneNumber: phoneNumber.trim(),
       numberOfGuests,
-      willingToShare: numberOfGuests === 2 ? willingToShare : false,
+      preferSharing: numberOfGuests === 2 ? willingToShare : false,
       waitingTime: waitingTime,
     };
 
     try {
       // First make API call
-      const { data } = await axios.post(
-        "https://v0-next-js-socket-server-s1.vercel.app/api/guests",
-        guestData
-      );
-      console.log(" >>>> Add Data", data);
-
       // Then add to local state via context
-      await addGuest({ ...guestData, _id: data._id });
-      handleClose();
+      const response = await newGuestEntryAPI(guestData);
+      console.log(" >>>>>> resopnse", response);
+      if (response.status === 201) {
+        handleClose();
+      }
     } catch (error) {
+      console.log(" >>>> error ", error);
       Alert.alert("Error", "Failed to add guest");
     }
   };
@@ -120,127 +119,129 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            {/* <Text style={styles.modalTitle}>Add to Waiting List</Text>   */}
+            <KeyboardAwareScrollView>
+              {/* <Text style={styles.modalTitle}>Add to Waiting List</Text>   */}
 
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Guest Name</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Enter guest name"
-                placeholderTextColor={"#222222"}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Mobile Number</Text>
-              <TextInput
-                style={[styles.input, phoneError ? styles.inputError : null]}
-                value={phoneNumber}
-                onChangeText={handlePhoneChange}
-                placeholder="Enter mobile number"
-                placeholderTextColor={"#222222"}
-                keyboardType="phone-pad"
-                maxLength={10}
-              />
-              {phoneError ? (
-                <Text style={styles.errorText}>{phoneError}</Text>
-              ) : null}
-            </View>
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Waiting Time</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="phone-pad"
-                placeholder="Enter Waiting Time"
-                placeholderTextColor={"#222222"}
-                value={waitingTime?.toString()}
-                onChangeText={(text) => {
-                  if (text !== "") {
-                    setWaitingTime(parseInt(text));
-                  } else {
-                    setWaitingTime(null);
-                  }
-                }}
-              />
-            </View>
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Number of Guests</Text>
-              <TextInput
-                style={styles.input}
-                value={numberOfGuest}
-                onChangeText={(text) => {
-                  setNumberOfGuest(text);
-                  if (text !== "") {
-                    setnumberOfGuests(parseInt(text));
-                  }
-                }}
-                keyboardType="phone-pad"
-                placeholder="Enter no. of guests"
-                placeholderTextColor={"#222222"}
-              />
-              <View style={styles.numberOfGuestsContainer}>
-                {[2, 4, 6].map((count) => (
-                  <TouchableOpacity
-                    key={count}
-                    style={[
-                      styles.numberOfGuestsButton,
-                      numberOfGuests === count &&
-                        styles.numberOfGuestsButtonActive,
-                    ]}
-                    onPress={() => handlenumberOfGuestsSelect(count)}
-                  >
-                    <Text
-                      style={[
-                        styles.numberOfGuestsButtonText,
-                        numberOfGuests === count &&
-                          styles.numberOfGuestsButtonTextActive,
-                      ]}
-                    >
-                      {count}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Guest Name</Text>
+                <TextInput
+                  style={styles.input}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter guest name"
+                  placeholderTextColor={"#222222"}
+                />
               </View>
-            </View>
 
-            {numberOfGuests === 2 && (
-              <TouchableOpacity
-                style={styles.checkboxContainer}
-                onPress={() => setWillingToShare(!willingToShare)}
-              >
-                <View
-                  style={[
-                    styles.checkbox,
-                    willingToShare && styles.checkboxActive,
-                  ]}
-                >
-                  {willingToShare && (
-                    <MaterialIcons name="check" size={16} color="#FFF" />
-                  )}
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Mobile Number</Text>
+                <TextInput
+                  style={[styles.input, phoneError ? styles.inputError : null]}
+                  value={phoneNumber}
+                  onChangeText={handlePhoneChange}
+                  placeholder="Enter mobile number"
+                  placeholderTextColor={"#222222"}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+                {phoneError ? (
+                  <Text style={styles.errorText}>{phoneError}</Text>
+                ) : null}
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Waiting Time</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                  placeholder="Enter Waiting Time"
+                  placeholderTextColor={"#222222"}
+                  value={waitingTime?.toString()}
+                  onChangeText={(text) => {
+                    if (text !== "") {
+                      setWaitingTime(parseInt(text));
+                    } else {
+                      setWaitingTime(null);
+                    }
+                  }}
+                />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Number of Guests</Text>
+                <TextInput
+                  style={styles.input}
+                  value={numberOfGuest}
+                  onChangeText={(text) => {
+                    setNumberOfGuest(text);
+                    if (text !== "") {
+                      setnumberOfGuests(parseInt(text));
+                    }
+                  }}
+                  keyboardType="phone-pad"
+                  placeholder="Enter no. of guests"
+                  placeholderTextColor={"#222222"}
+                />
+                <View style={styles.numberOfGuestsContainer}>
+                  {[2, 4, 6].map((count) => (
+                    <TouchableOpacity
+                      key={count}
+                      style={[
+                        styles.numberOfGuestsButton,
+                        numberOfGuests === count &&
+                          styles.numberOfGuestsButtonActive,
+                      ]}
+                      onPress={() => handlenumberOfGuestsSelect(count)}
+                    >
+                      <Text
+                        style={[
+                          styles.numberOfGuestsButtonText,
+                          numberOfGuests === count &&
+                            styles.numberOfGuestsButtonTextActive,
+                        ]}
+                      >
+                        {count}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-                <Text style={styles.checkboxLabel}>
-                  Will you prefer sharing?
-                </Text>
-              </TouchableOpacity>
-            )}
+              </View>
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddGuest}
-              >
-                <Text style={styles.addButtonText}>Add</Text>
-              </TouchableOpacity>
+              {numberOfGuests === 2 && (
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => setWillingToShare(!willingToShare)}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      willingToShare && styles.checkboxActive,
+                    ]}
+                  >
+                    {willingToShare && (
+                      <MaterialIcons name="check" size={16} color="#FFF" />
+                    )}
+                  </View>
+                  <Text style={styles.checkboxLabel}>
+                    Will you prefer sharing?
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={handleClose}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={handleAddGuest}
+                >
+                  <Text style={styles.addButtonText}>Add</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleClose}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </KeyboardAwareScrollView>
           </View>
         </View>
       </TouchableWithoutFeedback>

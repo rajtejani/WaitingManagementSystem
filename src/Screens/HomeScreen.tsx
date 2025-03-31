@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
+import { capitalize } from "lodash";
+import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useAppContext } from "../Context/AppContext";
+import { StatusEnum, useAppContext } from "../Context/AppContext";
 import AddGuestModal from "../components/AddGuestModal";
 import Badge from "../components/Badge";
 import CompletedList from "../components/CompletedList";
 import WaitingList from "../components/WaitingList";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { UserRolesTypes } from "../utils/common.utils";
 
 const HomeScreen = () => {
@@ -15,24 +15,15 @@ const HomeScreen = () => {
     "upcoming"
   );
   const [isAddModalVisible, setAddModalVisible] = useState(false);
-  const { waitingGuests, completedGuests, userRole, updateUserRole } =
-    useAppContext();
-  const upcomingGuestsCount = waitingGuests?.filter(
-    (guest) => guest.status
+  const { todaysGuest, role } = useAppContext();
+
+  const upcomingGuestsCount = todaysGuest?.filter(
+    (guest) => ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   ).length;
-  const completedGuestsCount = completedGuests?.filter(
-    (guest) => guest.status
+  const completedGuestsCount = todaysGuest?.filter((guest) =>
+    [StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   ).length;
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      const storedUserRole = await AsyncStorage.getItem("userRole");
-      if (storedUserRole) {
-        updateUserRole(storedUserRole); // Update the userRole state here
-      }
-    };
-    fetchUserRole();
-  }, []);
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -44,10 +35,13 @@ const HomeScreen = () => {
                 : "Guest Completed List"}
             </Text>
             <Text style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>
-              {userRole}
+              {role
+                ?.split("_")
+                .map((word) => capitalize(word))
+                .join(" ")}
             </Text>
           </View>
-          {userRole !== UserRolesTypes.TableManager && (
+          {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => setAddModalVisible(true)}
@@ -58,7 +52,7 @@ const HomeScreen = () => {
         </View>
 
         <View style={styles.tabContainer}>
-          {userRole !== UserRolesTypes.TableManager && (
+          {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity
               style={[styles.tab, activeTab === "upcoming" && styles.activeTab]}
               onPress={() => setActiveTab("upcoming")}
@@ -74,7 +68,7 @@ const HomeScreen = () => {
               <Badge count={upcomingGuestsCount} />
             </TouchableOpacity>
           )}
-          {userRole !== UserRolesTypes.TableManager && (
+          {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity
               style={[
                 styles.tab,

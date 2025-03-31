@@ -1,206 +1,253 @@
+import type { PusherEvent } from "@pusher/pusher-websocket-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { io } from "socket.io-client";
-import { AppSettings, DailyStats, Guest, StatusTypes } from "../types";
+import { uniqBy } from "lodash";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import { ActivityIndicator, Image, View } from "react-native";
+import { verifyAPI } from "../apis/auth";
+import { getTodaysGuestAPI } from "../apis/guest";
+import apiInstance from "../config/axios";
+import pusher from "../services/pusherService";
+const Sound = require("react-native-sound");
 
-export const socket = io(
-  "https://v0-next-js-socket-server-s1.vercel.app/api/socket"
-);
-
-interface AppContextType {
-  guests: Guest[];
-  waitingGuests: Guest[];
-  completedGuests: Guest[];
-  dailyStats: DailyStats[];
-  settings: AppSettings;
-  estimatedWaitingTime: number;
-  addGuest: (
-    guest: Omit<Guest, "entryTime" | "status" | "waitingTime">
-  ) => Promise<void>;
-  updateGuestStatus: (id: string, status: StatusTypes) => Promise<void>;
-  updateWaitingStatus: (id: string, status: StatusTypes) => Promise<void>;
-  getDailyStats: (date: string) => DailyStats | undefined;
-  updateSettings: (settings: AppSettings) => Promise<void>;
-  inLineGuests: string[];
-  setInLineGuests: (inLineGuests: string[]) => void;
-  updateUserRole: (role: string) => void;
-  userRole: string | null;
-}
-
-const defaultSettings: AppSettings = {
-  avgTableTurnaroundTime: 30,
-  totalTables: 10,
+type User = {
+  name: string;
+  role: string;
+  username: string;
 };
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+export interface GuestInput {
+  name: string;
+  phoneNumber: string;
+  numberOfGuests: number;
+  waitingTime: number;
+  preferSharing?: boolean;
+}
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [todaysGuestList, setGuests] = useState<Guest[]>([]);
-  const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
-  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
-  const [inLineGuests, setInLineGuests] = useState<string[]>([]);
-  const [userRole, setUserRole] = useState<string | null>(null);
+export enum StatusEnum {
+  "waiting" = "waiting",
+  "Table Ready" = "Table Ready",
+  "In Line" = "In Line",
+  "Seated" = "Seated",
+  "Cancelled" = "Cancelled",
+}
+export interface Guest extends GuestInput {
+  _id: string;
+  status: StatusEnum;
+  entryTime: string;
+}
+interface AppContextType {
+  user?: User;
+  token?: string;
+  role?: string;
+  todaysGuest: Guest[];
+  guestHistory: Guest[];
+  loaders: {
+    isTodaysGuestLoading: boolean;
+    isGuestHistoryLoading: boolean;
+  };
+  setLoaders: Dispatch<
+    SetStateAction<{
+      isTodaysGuestLoading: boolean;
+      isGuestHistoryLoading: boolean;
+    }>
+  >;
+  loginUserAction: (token: string, user: User) => void;
+  setTodaysGuest: Dispatch<SetStateAction<Guest[]>>;
+  setGuestHistory: Dispatch<SetStateAction<Guest[]>>;
+}
 
-  // Calculated properties
-  const waitingGuests = todaysGuestList?.filter(
-    (guest) =>
-      guest.status === StatusTypes.Waiting ||
-      guest.status === StatusTypes.Confirmed
-  );
-  const completedGuests = todaysGuestList?.filter(
-    (guest) =>
-      guest.status === StatusTypes.Seated ||
-      guest.status === StatusTypes.Cancelled
-  );
+const statusChangeSound = new Sound(
+  "notification_alert.mp3",
+  Sound.MAIN_BUNDLE,
+  (error: any) => {
+    if (error) {
+      console.log("Failed to load the sound", error);
+    }
+  }
+);
+const newGuestSound = new Sound("beep.mp3", Sound.MAIN_BUNDLE, (error: any) => {
+  if (error) {
+    console.log("Failed to load the sound", error);
+  }
+});
 
-  // Calculate estimated waiting time based on settings and current waitlist
-  const estimatedWaitingTime = Math.max(
-    Math.ceil(
-      (waitingGuests?.length / settings.totalTables) *
-        settings.avgTableTurnaroundTime
-    ),
-    0
-  );
+export const AppContext = createContext<AppContextType>({
+  user: undefined,
+  token: "",
+  role: "",
+  todaysGuest: [],
+  guestHistory: [],
+  loginUserAction: (token: string, user: User) => {},
+  setLoaders: () => {},
+  loaders: {
+    isTodaysGuestLoading: false,
+    isGuestHistoryLoading: false,
+  },
+  setTodaysGuest: () => {},
+  setGuestHistory: () => {},
+});
 
-  // Initial data fetch and socket subscriptions
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const response = await axios.get(
-          "https://v0-next-js-socket-server-s1.vercel.app/api/guests"
-        );
+export const AppProvider: React.FC<{
+  children: React.ReactNode | React.ReactElement;
+}> = ({ children }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [todaysGuest, setTodaysGuest] = useState<Guest[]>([]);
+  const [guestHistory, setGuestHistory] = useState<Guest[]>([]);
+  const [loaders, setLoaders] = useState({
+    isTodaysGuestLoading: false,
+    isGuestHistoryLoading: false,
+  });
+  const [accessToken, setToken] = useState("");
+  const [user, setUser] = useState<User>();
 
-        const data = await response.data;
+  const getCurrentUser = async () => {
+    try {
+      setIsLoading(true);
+      const token = await AsyncStorage.getItem("@API_TOKEN");
 
-        setGuests(data.guests);
-        setDailyStats(data.dailyStats);
-        setSettings(data.settings || defaultSettings);
-      } catch (error) {
-        console.error("Error fetching initial data:", error);
+      console.log(" Token >>>>>>", token);
+      if (!token) {
+        setIsLoading(false);
+        return;
       }
-    };
 
-    fetchInitialData();
+      apiInstance.defaults.headers["auth_token"] = token;
+      const response = await verifyAPI(token);
 
-    // Socket subscriptions
-    socket.on("waitingListUpdate", (updatedGuests: Guest[]) => {
-      setGuests(updatedGuests);
-    });
+      setToken(token);
+      setUser(response.data.user);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+    }
+  };
 
-    return () => {
-      socket.off("waitingListUpdate");
-    };
-  }, []);
+  const loginUserAction = async (token: string, user: User) => {
+    await AsyncStorage.setItem("@API_TOKEN", token);
+    await AsyncStorage.setItem("@ROLE", user.role);
 
-  useEffect(() => {
-    const loadInLineGuests = async () => {
-      try {
-        const storedInLineGuests = await AsyncStorage.getItem("inLineGuests");
-        if (storedInLineGuests) {
-          setInLineGuests(JSON.parse(storedInLineGuests));
+    apiInstance.defaults.headers["auth_token"] = token;
+    setUser(user);
+    setToken(token);
+  };
+
+  const getTodaysGuest = async () => {
+    try {
+      setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
+      const response = await getTodaysGuestAPI();
+      setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
+      if (response.status === 200) {
+        setTodaysGuest(response.data.guests);
+      }
+    } catch (error) {
+      console.log(" >>> error ", error);
+      setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
+    }
+  };
+
+  const connectAndSubPusher = async () => {
+    await pusher.connect();
+    await pusher.subscribe({
+      channelName: "waiting_management",
+      onEvent: (event: PusherEvent) => {
+        console.log(`Event received`, event);
+        const data = JSON.parse(event.data);
+
+        if (event.eventName === "update_guest") {
+          const guest = data.guest;
+          console.log(" >>>> data ", data);
+          statusChangeSound.play((success: any) => {
+            if (success) {
+              console.log("successfully finished playing");
+            } else {
+              console.log("playback failed due to audio decoding errors");
+            }
+          });
+          setTodaysGuest((prev) => {
+            return prev.map((currGuest) => {
+              if (currGuest._id === guest._id) {
+                return guest;
+              }
+
+              return currGuest;
+            });
+          });
         }
-      } catch (error) {
-        console.error("Error loading inLineGuests:", error);
-      }
-    };
-    loadInLineGuests();
+        if (event.eventName === "new_guest") {
+          newGuestSound.play((success: any) => {
+            if (success) {
+              console.log("successfully finished playing");
+            } else {
+              console.log("playback failed due to audio decoding errors");
+            }
+          });
+          setTodaysGuest((prev) => uniqBy([...prev, data.guest], "_id"));
+        }
+      },
+      onSubscriptionError: (error) => {
+        console.log("!!!! error subscribing ", error);
+      },
+      onSubscriptionSucceeded: (data) => {
+        console.log(" >>>> Successfully subscribed ", data);
+      },
+    });
+  };
+
+  useEffect(() => {
+    getCurrentUser();
   }, []);
 
   useEffect(() => {
-    const saveInLineGuests = async () => {
-      try {
-        await AsyncStorage.setItem(
-          "inLineGuests",
-          JSON.stringify(inLineGuests)
-        );
-      } catch (error) {
-        console.error("Error saving inLineGuests:", error);
-      }
-    };
-    saveInLineGuests();
-  }, [inLineGuests]);
+    if (!!user) {
+      getTodaysGuest();
 
-  const updateUserRole = (role: string) => {
-    setUserRole(role);
-  };
-  // Add a new guest to the waiting list
-  const addGuest = async (
-    guestData: Omit<Guest, "entryTime" | "status" | "waitingTime">
-  ) => {
-    const now = new Date();
-    const newGuest: Guest = {
-      ...guestData,
-      entryTime: now.toISOString(),
-      status: StatusTypes.Waiting,
-      waitingTime: estimatedWaitingTime,
-    };
-  };
-  // Update a guest's status
-  const updateGuestStatus = async (id: string, status: StatusTypes) => {
-    const guestIndex = todaysGuestList.findIndex((g) => g._id === id);
-    if (guestIndex !== -1) {
-      todaysGuestList[guestIndex].status = status;
-      setGuests([...todaysGuestList]);
-    }
-    // Update daily stats if guest is seated
-    if (status === StatusTypes.Seated) {
-      const guest = todaysGuestList.find(
-        (g) => g._id === id && g.status === StatusTypes.Seated
-      );
-      if (guest) {
-        const today = new Date().toISOString().split("T")[0];
-        updateDailyStats(today, guest);
-      }
-    }
-  };
-  const updateWaitingStatus = async (id: string, status: StatusTypes) => {
-    console.log("Before update:", todaysGuestList);
-
-    const guestIndex = todaysGuestList.findIndex((guest) => guest._id === id);
-    if (guestIndex !== -1) {
-      const updatedGuests = [...todaysGuestList];
-      updatedGuests[guestIndex] = { ...updatedGuests[guestIndex], status };
-
-      setGuests(updatedGuests);
+      connectAndSubPusher();
     }
 
-    console.log("After update:", todaysGuestList);
-  };
+    // Cleanup on component unmount
+    return () => {};
+  }, [user]);
 
-  // Update daily statistics
-  const updateDailyStats = async (date: string, guest: Guest) => {};
-
-  // Get stats for a specific date
-  const getDailyStats = (date: string) => {
-    return dailyStats.find((stat) => stat.date === date);
-  };
-
-  // Update app settings
-  const updateSettings = async (newSettings: AppSettings) => {
-    socket.emit("updateSettings", newSettings);
-  };
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          gap: 20,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Image
+          source={require("../assets/images/logo.png")}
+          style={{ height: 200 }}
+          resizeMode="contain"
+        />
+        <ActivityIndicator color={"#E73E1F"} size={40} />
+      </View>
+    );
+  }
 
   return (
     <AppContext.Provider
       value={{
-        guests: todaysGuestList,
-        waitingGuests,
-        completedGuests,
-        dailyStats,
-        settings,
-        estimatedWaitingTime,
-        addGuest,
-        updateGuestStatus,
-        updateWaitingStatus,
-        getDailyStats,
-        updateSettings,
-        inLineGuests,
-        setInLineGuests,
-        userRole,
-        updateUserRole,
+        user,
+        token: accessToken,
+        role: user?.role,
+        todaysGuest: todaysGuest,
+        guestHistory: guestHistory,
+        loginUserAction,
+        loaders,
+        setTodaysGuest,
+        setGuestHistory,
+        setLoaders,
       }}
     >
       {children}

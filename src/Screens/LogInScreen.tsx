@@ -1,28 +1,62 @@
-import React, { useState } from "react";
+import { AxiosError } from "axios";
+import React, { useContext, useState } from "react";
 import {
+  ActivityIndicator,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { loginAPI } from "../apis/auth";
+import { AppContext } from "../Context/AppContext";
+
 const LogInScreen = () => {
+  const { loginUserAction } = useContext(AppContext);
+  // TODO: REMOVE static username and password
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [loadingError, setLoginError] = useState("");
   const [nameError, setNameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAddGuest = async () => {
+    let error = false;
     if (!name.trim()) {
+      error = true;
       setNameError("Please enter your username");
     } else {
       setNameError("");
     }
 
     if (!password.trim()) {
+      error = true;
       setPasswordError("Please enter your password");
     } else {
       setPasswordError("");
+    }
+
+    if (error) return;
+
+    setLoginError("");
+    try {
+      setIsLoading(true);
+      const response = await loginAPI({ username: name, password });
+
+      if (response.status === 200) {
+        const { token, user } = response.data;
+        loginUserAction(token, user);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.log(" >>>> error ", error.response);
+        setLoginError(error.response?.data.message);
+      } else {
+        setLoginError("We are unable to login. Please try again later.");
+      }
+      setIsLoading(false);
     }
   };
 
@@ -59,8 +93,18 @@ const LogInScreen = () => {
             ) : null}
           </View>
         </View>
+        {loadingError && (
+          <Text style={{ textAlign: "center", color: "#F00" }}>
+            {loadingError}
+          </Text>
+        )}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddGuest}>
+          <TouchableOpacity
+            disabled={isLoading}
+            style={styles.addButton}
+            onPress={handleAddGuest}
+          >
+            {isLoading && <ActivityIndicator color={"#FFF"} size={20} />}
             <Text style={styles.addButtonText}>Submit</Text>
           </TouchableOpacity>
         </View>
@@ -68,6 +112,7 @@ const LogInScreen = () => {
     </>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     width: "100%",
@@ -116,6 +161,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignContent: "center",
+    gap: 5,
   },
   addButtonText: {
     color: "#FFF",
@@ -128,4 +177,5 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
 });
+
 export default LogInScreen;

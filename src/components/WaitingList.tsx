@@ -1,6 +1,8 @@
 import { format, parseISO } from "date-fns";
-import React, { useEffect, useRef } from "react";
+import { capitalize, cloneDeep } from "lodash";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Easing,
@@ -17,25 +19,27 @@ import NativeHapticFeedback, {
 } from "react-native-haptic-feedback";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useAppContext } from "../Context/AppContext";
-import { Guest, StatusTypes } from "../types";
-import Sound from "react-native-sound";
+import { Guest, StatusEnum, useAppContext } from "../Context/AppContext";
+
+import { updateGuestStatusAPI } from "../apis/guest";
 import { UserRolesTypes } from "../utils/common.utils";
+
 const WaitingList = () => {
-  const {
-    waitingGuests,
-    updateGuestStatus,
-    inLineGuests,
-    setInLineGuests,
-    updateWaitingStatus,
-    userRole,
-  } = useAppContext();
+  const { role, todaysGuest, loaders } = useAppContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
+  const [loadingIds, setLoadingIds] = useState<string[]>([]);
+
+  let upcomingGuests = cloneDeep(
+    todaysGuest?.filter(
+      (guest) =>
+        ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
+    )
+  );
 
   useEffect(() => {
     const pulse = () => {
@@ -87,34 +91,38 @@ const WaitingList = () => {
       }
     },
   };
-  const successSound = new Sound(
-    "my_file_name.mp3",
-    Sound.MAIN_BUNDLE,
-    (error) => {
-      if (error) {
-        console.log("Failed to load the sound", error);
-      }
-    }
-  );
+  // const successSound = new Sound(
+  //   "my_file_name.mp3",
+  //   Sound.MAIN_BUNDLE,
+  //   (error) => {
+  //     if (error) {
+  //       console.log("Failed to load the sound", error);
+  //     }
+  //   }
+  // );
   const playSound = () => {
-    successSound.play((success) => {
-      if (!success) {
-        console.log("Sound playback failed");
-      }
-    });
+    // TODO: Change Sound file
+    // successSound.play((success) => {
+    //   if (!success) {
+    //     console.log("Sound playback failed");
+    //   }
+    // });
   };
-  const getStatusColor = (status: StatusTypes) => {
+  const getStatusColor = (status: StatusEnum) => {
     switch (status) {
-      case StatusTypes.Waiting:
-        return "#ffc107";
-      case StatusTypes.Confirmed:
-        return "#6A96F2";
-      case StatusTypes.Seated:
+      case StatusEnum.waiting:
+        return "#A0A0A0";
+      case StatusEnum["Table Ready"]:
+        return "#2196F3";
+      case StatusEnum["In Line"]:
+        return "#FFC107";
+      case StatusEnum.Seated:
         return "#4CAF50";
-      case StatusTypes.Cancelled:
+      case StatusEnum.Cancelled:
         return "#F44336";
     }
   };
+
   const handleCall = (phoneNumber: string) => {
     RNHapticFeedback.trigger("impactMedium", defaultOptions);
     playSound();
@@ -141,43 +149,41 @@ const WaitingList = () => {
         {
           text: "Yes",
           style: "destructive",
-          onPress: () => updateGuestStatus(id, StatusTypes.Cancelled),
+          onPress: () => handleStatusChange(id, StatusEnum.Cancelled),
         },
       ]
     );
   };
 
-  const handleInLine = (id: string) => {
+  const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
     RNHapticFeedback.trigger("impactMedium", defaultOptions);
+
+    try {
+      setLoadingIds((prev) => {
+        if (!prev.includes(id)) {
+          return [...prev, id];
+        }
+
+        return prev;
+      });
+      const response = await updateGuestStatusAPI(id, newStatus);
+
+      console.log(" >>>> response ", response);
+      setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
+    } catch (error) {
+      setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
+    }
     playSound();
-
-    updateWaitingStatus(id, StatusTypes.Confirmed);
-
-    setInLineGuests((prev: string[]) => {
-      const newList = [...(prev ?? []), id];
-      console.log("Updated inLineGuests:", newList); // Debugging
-      return newList;
-    });
   };
 
-  const handleComplete = (id: string) => {
-    RNHapticFeedback.trigger("impactMedium", defaultOptions);
-    playSound();
-
-    // Move to seated status and remove from inLine state
-    updateWaitingStatus(id, StatusTypes.Seated);
-    setInLineGuests(inLineGuests.filter((guestId) => guestId !== id));
+  const formatWaitingTime = (waitingTime: number) => {
+    const hours = Math.floor(waitingTime / 60);
+    const minutes = waitingTime % 60;
+    return `${hours}h ${minutes}m`;
   };
 
   const renderItem = ({ item }: { item: Guest }) => {
     const statusColor = getStatusColor(item.status);
-    const isInLine = inLineGuests.includes(item._id);
-
-    const formatWaitingTime = (waitingTime: number) => {
-      const hours = Math.floor(waitingTime / 60);
-      const minutes = waitingTime % 60;
-      return `${hours}h ${minutes}m`;
-    };
 
     return (
       <View style={[styles.guestItem]}>
@@ -195,7 +201,7 @@ const WaitingList = () => {
                 </View>
                 <View style={styles.numberCircle}>
                   <Text style={styles.numberText}>{item.numberOfGuests}</Text>
-                  {item.willingToShare && (
+                  {item.preferSharing && (
                     <Text style={styles.sharingText}>Sharing</Text>
                   )}
                 </View>
@@ -224,18 +230,11 @@ const WaitingList = () => {
                         style={[styles.icon]}
                       />
                       <Text style={[styles.timeText]}>
-                        {formatWaitingTime(item.waitingTime)}
+                        {item.waitingTime} Mins
                       </Text>
                     </View>
                   </View>
                 </View>
-                {/* <Animated.View
-                  style={[
-                    styles.statusIcon,
-                    styles.pulseContainer,
-                    { transform: [{ scale: scaleAnim }], opacity: opacityAnim },
-                  ]}
-                > */}
                 <View
                   style={[
                     styles.statusContainer,
@@ -243,14 +242,6 @@ const WaitingList = () => {
                     { borderColor: statusColor },
                   ]}
                 >
-                  {/* <View
-                      style={[
-                        styles.statusIcon,
-                        {
-                          backgroundColor: statusColor,
-                        },
-                      ]}
-                    /> */}
                   <Animated.View
                     style={[
                       styles.statusIcon,
@@ -266,8 +257,7 @@ const WaitingList = () => {
                   {/* <View style={styles.innerBox} /> */}
                   <View>
                     <Text style={[styles.statusText, { color: statusColor }]}>
-                      {item.status.charAt(0).toUpperCase() +
-                        item.status.slice(1)}
+                      {capitalize(item.status.toString())}
                     </Text>
                   </View>
                 </View>
@@ -278,34 +268,96 @@ const WaitingList = () => {
 
           <View style={styles.actions}>
             <View style={styles.actionsContainer}>
-              {!isInLine ? (
-                <TouchableOpacity
-                  style={styles.inLineButton}
-                  onPress={() => handleInLine(item._id)}
-                >
-                  <Text style={styles.inLineText}>In Line</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.completeButton}
-                  onPress={() => handleComplete(item._id)}
-                >
-                  <Text style={styles.completeText}>Complete</Text>
-                </TouchableOpacity>
+              {role !== UserRolesTypes.TableManager &&
+                item.status !== StatusEnum.Seated && (
+                  <TouchableOpacity
+                    style={styles.callButton}
+                    onPress={() => handleCancel(item._id)}
+                  >
+                    {loadingIds.includes(item._id) ? (
+                      <ActivityIndicator size={20} color="#FFF" />
+                    ) : (
+                      <Ionicons
+                        name="trash"
+                        size={20}
+                        color="#FFF"
+                        style={styles.callIcon}
+                      />
+                    )}
+                  </TouchableOpacity>
+                )}
+              {role === UserRolesTypes.TableManager && (
+                <>
+                  {item.status === StatusEnum.waiting && (
+                    <TouchableOpacity
+                      style={styles.completeButton(
+                        getStatusColor(StatusEnum["Table Ready"])
+                      )}
+                      onPress={() =>
+                        handleStatusChange(item._id, StatusEnum["Table Ready"])
+                      }
+                    >
+                      {loadingIds.includes(item._id) && (
+                        <ActivityIndicator size={20} color="#FFF" />
+                      )}
+                      <Text style={styles.completeText}>Table Ready</Text>
+                    </TouchableOpacity>
+                  )}
+                  {item.status === StatusEnum["In Line"] && (
+                    <TouchableOpacity
+                      style={styles.completeButton(
+                        getStatusColor(StatusEnum.Seated)
+                      )}
+                      onPress={() =>
+                        handleStatusChange(item._id, StatusEnum.Seated)
+                      }
+                    >
+                      {loadingIds.includes(item._id) && (
+                        <ActivityIndicator size={20} color="#FFF" />
+                      )}
+                      <Text style={styles.completeText}>Seated</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
               )}
-              {/* <TouchableOpacity
-                style={styles.completeButton}
-                onPress={() => handleInLine(item._id)}
-              >
-                <Text style={styles.completeText}>Table ready</Text>
-              </TouchableOpacity> */}
-              {/* <TouchableOpacity
-                style={styles.completeButton}
-                onPress={() => handleComplete(item._id)}
-              >
-                <Text style={styles.completeText}>Seated</Text>
-              </TouchableOpacity> */}
-              {userRole !== UserRolesTypes.TableManager && (
+              {role !== UserRolesTypes.TableManager && (
+                <>
+                  <>
+                    {item.status === StatusEnum["Table Ready"] && (
+                      <TouchableOpacity
+                        style={styles.completeButton(
+                          getStatusColor(StatusEnum["In Line"])
+                        )}
+                        onPress={() =>
+                          handleStatusChange(item._id, StatusEnum["In Line"])
+                        }
+                      >
+                        {loadingIds.includes(item._id) && (
+                          <ActivityIndicator size={20} color="#FFF" />
+                        )}
+                        <Text style={styles.completeText}>In Line</Text>
+                      </TouchableOpacity>
+                    )}
+                    {item.status === StatusEnum["In Line"] && (
+                      <TouchableOpacity
+                        style={styles.completeButton(
+                          getStatusColor(StatusEnum.Seated)
+                        )}
+                        onPress={() =>
+                          handleStatusChange(item._id, StatusEnum.Seated)
+                        }
+                      >
+                        {loadingIds.includes(item._id) && (
+                          <ActivityIndicator size={20} color="#FFF" />
+                        )}
+                        <Text style={styles.completeText}>Seated</Text>
+                      </TouchableOpacity>
+                    )}
+                  </>
+                </>
+              )}
+
+              {role !== UserRolesTypes.TableManager && (
                 <TouchableOpacity
                   style={styles.callButton}
                   onPress={() => handleCall(item.phoneNumber)}
@@ -327,21 +379,27 @@ const WaitingList = () => {
   };
   return (
     <View style={styles.container}>
-      {waitingGuests?.length > 0 ? (
-        <FlatList
-          data={waitingGuests}
-          keyExtractor={(item) => item._id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-        />
+      {loaders.isTodaysGuestLoading ? (
+        <ActivityIndicator size={30} color="#E73E1F" />
       ) : (
-        <View style={styles.emptyStateContainer}>
-          <MaterialIcons name="today" size={64} color="#DDD" />
-          <Text style={styles.emptyStateText}>No Upcoming guests</Text>
-          <Text style={styles.emptyStateSubtext}>
-            Upcoming guests will appear here
-          </Text>
-        </View>
+        <>
+          {upcomingGuests?.length > 0 ? (
+            <FlatList
+              data={upcomingGuests}
+              keyExtractor={(item) => item._id}
+              renderItem={renderItem}
+              contentContainerStyle={styles.listContent}
+            />
+          ) : (
+            <View style={styles.emptyStateContainer}>
+              <MaterialIcons name="today" size={64} color="#DDD" />
+              <Text style={styles.emptyStateText}>No Upcoming guests</Text>
+              <Text style={styles.emptyStateSubtext}>
+                Upcoming guests will appear here
+              </Text>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -378,15 +436,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  // statusContainer: {
-  //   flexDirection: "row",
-  //   position: "relative",
-  //   alignItems: "center",
-  //   justifyContent: "center",
-
-  //   borderRadius: 20,
-  //   borderWidth: 1,
-  // },
   statusContainer: {
     position: "relative",
     flexDirection: "row",
@@ -427,13 +476,17 @@ const styles = StyleSheet.create({
     marginLeft: 3,
     fontFamily: "Poppins",
   },
-  completeButton: {
-    backgroundColor: "#5CF34B",
+  completeButton: (bgColor: string) => ({
+    backgroundColor: bgColor,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
     flex: 1,
-  },
+    flexDirection: "row",
+    gap: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  }),
   completeText: {
     color: "#fff",
     fontSize: 14,

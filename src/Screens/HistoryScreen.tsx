@@ -1,35 +1,30 @@
-import axios from "axios";
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { FlatList } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
-import { useAppContext } from "../Context/AppContext";
-import type { DailyStats, Guest } from "../types";
+import type { Guest } from "../Context/AppContext";
 
 const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [stats, setStats] = useState<DailyStats | undefined>();
-  const { getDailyStats } = useAppContext();
+  const [isLoading, setIsLoading] = useState(false);
+  const [guestList, setGuestList] = useState<Guest[]>([]);
 
   const handleDateSelected = async (date: Date) => {
     setSelectedDate(date);
     const dateString = date.toISOString().split("T")[0];
 
     try {
-      const response = await axios.get(
-        `https://v0-next-js-socket-server-s1.vercel.app/api/guests`,
-        {
-          params: {
-            startOfDay: `${dateString}T05:30:00.000Z`,
-            endOfDay: `${dateString}T18:29:59.999Z`,
-          },
-        }
-      );
-      setStats(response.data);
+      setIsLoading(true);
+      const response = await getGuestHistoryAPI(`${dateString}T05:30:00.000Z`);
+      console.log(" History Response ", response);
+      if (response.status === 200) setGuestList(response.data.guests);
+      setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
       console.error("Error fetching guest history:", error);
-      setStats(undefined);
     }
   };
 
@@ -41,35 +36,55 @@ const HistoryScreen = () => {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Guests</Text>
-            <Text style={styles.statValue}>{stats?.totalGuests || 0}</Text>
+            <Text style={styles.statValue}>{guestList?.length || 0}</Text>
           </View>
 
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Plates</Text>
-            <Text style={styles.statValue}>{stats?.totalPlates || 0}</Text>
+            <Text style={styles.statValue}>
+              {guestList.reduce((total, guest) => {
+                return (total += guest.numberOfGuests);
+              }, 0) || 0}
+            </Text>
           </View>
         </View>
 
-        {stats && stats.guestsServed.length > 0 ? (
-          <View style={styles.guestListContainer}>
-            <Text style={styles.sectionTitle}>Guests Served</Text>
-            {stats.guestsServed.map((guest: Guest) => (
-              <View key={guest._id} style={styles.guestItem}>
-                <View>
-                  <Text style={styles.guestName}>{guest.name}</Text>
-                  <Text style={styles.guestPhone}>{guest.phoneNumber}</Text>
-                </View>
-                <Text style={styles.numberOfGuests}>
-                  No. of guests: {guest.numberOfGuests}
-                </Text>
-              </View>
-            ))}
+        {isLoading ? (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <ActivityIndicator size={40} color="#E73E1F" />
           </View>
         ) : (
-          <View style={styles.emptyStateContainer}>
-            <MaterialIcons name="event-busy" size={64} color="#DDD" />
-            <Text style={styles.emptyStateText}>No data for this date</Text>
-          </View>
+          <>
+            {guestList.length > 0 ? (
+              <View style={styles.guestListContainer}>
+                <Text style={styles.sectionTitle}>Guests Served</Text>
+                <FlatList
+                  data={guestList}
+                  keyExtractor={(item) => item._id}
+                  renderItem={({ item: guest }) => (
+                    <View key={guest._id} style={styles.guestItem}>
+                      <View>
+                        <Text style={styles.guestName}>{guest.name}</Text>
+                        <Text style={styles.guestPhone}>
+                          {guest.phoneNumber}
+                        </Text>
+                      </View>
+                      <Text style={styles.numberOfGuests}>
+                        Total guests: {guest.numberOfGuests}
+                      </Text>
+                    </View>
+                  )}
+                />
+              </View>
+            ) : (
+              <View style={styles.emptyStateContainer}>
+                <MaterialIcons name="event-busy" size={64} color="#DDD" />
+                <Text style={styles.emptyStateText}>No data for this date</Text>
+              </View>
+            )}
+          </>
         )}
       </View>
     </SafeAreaView>
@@ -143,6 +158,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#EEEEEE",
+    backgroundColor: "#FFF",
+    marginVertical: 4,
+    padding: 15,
+    borderRadius: 5,
   },
   guestName: {
     fontSize: 16,
