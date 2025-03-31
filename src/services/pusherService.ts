@@ -1,6 +1,6 @@
 import { Pusher } from "@pusher/pusher-websocket-react-native";
 // Replace these with your Pusher credentials
-const APP_KEY = "cf9c0f04ff7ca1ed0044";
+const APP_KEY = "80f79a9ad7c59ed266c4";
 const APP_CLUSTER = "ap2";
 
 const pusher = Pusher.getInstance();

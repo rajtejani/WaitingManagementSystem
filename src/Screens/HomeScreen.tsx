@@ -1,15 +1,18 @@
+import { useNavigation } from "@react-navigation/native";
 import { capitalize } from "lodash";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { StatusEnum, useAppContext } from "../Context/AppContext";
-import AddGuestModal from "../components/AddGuestModal";
 import Badge from "../components/Badge";
 import CompletedList from "../components/CompletedList";
 import WaitingList from "../components/WaitingList";
 import { UserRolesTypes } from "../utils/common.utils";
-
+import NativeHapticFeedback, {
+  HapticFeedbackTypes,
+  HapticOptions,
+} from "react-native-haptic-feedback";
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
     "upcoming"
@@ -23,6 +26,33 @@ const HomeScreen = () => {
   const completedGuestsCount = todaysGuest?.filter((guest) =>
     [StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   ).length;
+  const navigation = useNavigation();
+
+  const defaultOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
+  const RNHapticFeedback = {
+    trigger(
+      type:
+        | keyof typeof HapticFeedbackTypes
+        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
+      options: HapticOptions = {}
+    ) {
+      try {
+        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
+      } catch {
+        console.warn("RNReactNativeHapticFeedback is not available");
+      }
+    },
+  };
+  const hapticPress = () => {
+    RNHapticFeedback.trigger("soft", defaultOptions);
+  };
+  const handleIconPress = () => {
+    hapticPress();
+    navigation.navigate("Guest");
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -44,7 +74,7 @@ const HomeScreen = () => {
           {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => setAddModalVisible(true)}
+              onPress={handleIconPress}
             >
               <MaterialIcons name="add" size={28} color="#E73E1F" />
             </TouchableOpacity>
@@ -55,7 +85,10 @@ const HomeScreen = () => {
           {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity
               style={[styles.tab, activeTab === "upcoming" && styles.activeTab]}
-              onPress={() => setActiveTab("upcoming")}
+              onPress={() => {
+                setActiveTab("upcoming");
+                hapticPress();
+              }}
             >
               <Text
                 style={[
@@ -74,7 +107,10 @@ const HomeScreen = () => {
                 styles.tab,
                 activeTab === "completed" && styles.activeTab,
               ]}
-              onPress={() => setActiveTab("completed")}
+              onPress={() => {
+                hapticPress();
+                setActiveTab("completed");
+              }}
             >
               <Text
                 style={[
@@ -94,10 +130,10 @@ const HomeScreen = () => {
         </View>
       </View>
 
-      <AddGuestModal
+      {/* <AddGuestModal
         visible={isAddModalVisible}
         onClose={() => setAddModalVisible(false)}
-      />
+      /> */}
     </SafeAreaView>
   );
 };
@@ -106,6 +142,8 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#F6F1E9",
+    zIndex: 100,
+    position: "relative",
   },
   container: {
     flex: 1,
@@ -154,6 +192,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#EEEEEE",
+    zIndex: 100,
+    position: "relative",
   },
   tab: {
     paddingVertical: 10,

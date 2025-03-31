@@ -8,9 +8,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { loginAPI } from "../apis/auth";
+import { loginAPI, verifyAPI } from "../apis/auth";
 import { AppContext } from "../Context/AppContext";
-
+import MaterialIcons from "react-native-vector-icons/Feather";
+import NativeHapticFeedback, {
+  HapticFeedbackTypes,
+  HapticOptions,
+} from "react-native-haptic-feedback";
+import Toast from "react-native-toast-message";
 const LogInScreen = () => {
   const { loginUserAction } = useContext(AppContext);
   // TODO: REMOVE static username and password
@@ -20,8 +25,32 @@ const LogInScreen = () => {
   const [nameError, setNameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const defaultOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
+  const RNHapticFeedback = {
+    trigger(
+      type:
+        | keyof typeof HapticFeedbackTypes
+        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
+      options: HapticOptions = {}
+    ) {
+      try {
+        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
+      } catch {
+        console.warn("RNReactNativeHapticFeedback is not available");
+      }
+    },
+  };
+  // Function to toggle the password visibility state
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
   const handleAddGuest = async () => {
+    RNHapticFeedback.trigger("soft", defaultOptions);
+
     let error = false;
     if (!name.trim()) {
       error = true;
@@ -47,6 +76,10 @@ const LogInScreen = () => {
       if (response.status === 200) {
         const { token, user } = response.data;
         loginUserAction(token, user);
+        const userData = await verifyAPI(token);
+        if (userData) {
+          loginUserAction(token, user);
+        }
       }
       setIsLoading(false);
     } catch (error) {
@@ -81,13 +114,21 @@ const LogInScreen = () => {
           </View>
           <View style={styles.formGroup}>
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              placeholder="Enter password"
-              placeholderTextColor={"#222222"}
-              onChangeText={(text) => setPassword(text)}
-            />
+            <View style={styles.passwordInput}>
+              <TextInput
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+                style={styles.pswInput}
+                placeholder="Enter password"
+                placeholderTextColor={"#222222"}
+              />
+              <MaterialIcons
+                name={showPassword ? "eye" : "eye-off"}
+                size={20}
+                onPress={toggleShowPassword}
+              />
+            </View>
             {passwordError ? (
               <Text style={styles.errorText}>{passwordError}</Text>
             ) : null}
@@ -147,6 +188,23 @@ const styles = StyleSheet.create({
     borderColor: "#000",
     borderRadius: 8,
     padding: 12,
+    fontSize: 16,
+    backgroundColor: "#F6F1E9",
+  },
+  passwordInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F6F1E9",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    borderColor: "#000",
+    borderWidth: 1,
+  },
+  pswInput: {
+    flex: 1,
+    borderRadius: 8,
     fontSize: 16,
     backgroundColor: "#F6F1E9",
   },

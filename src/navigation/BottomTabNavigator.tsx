@@ -5,12 +5,36 @@ import { useAppContext } from "../Context/AppContext";
 import HistoryScreen from "../Screens/HistoryScreen";
 import HomeScreen from "../Screens/HomeScreen";
 import { UserRolesTypes } from "../utils/common.utils";
-
+import NativeHapticFeedback, {
+  HapticFeedbackTypes,
+  HapticOptions,
+} from "react-native-haptic-feedback";
+import { TouchableOpacity } from "react-native";
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
   const { role } = useAppContext();
-
+  const defaultOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
+  const RNHapticFeedback = {
+    trigger(
+      type:
+        | keyof typeof HapticFeedbackTypes
+        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
+      options: HapticOptions = {}
+    ) {
+      try {
+        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
+      } catch {
+        console.warn("RNReactNativeHapticFeedback is not available");
+      }
+    },
+  };
+  const hapticPress = () => {
+    RNHapticFeedback.trigger("soft", defaultOptions);
+  };
   return (
     <>
       {role === UserRolesTypes.TableManager && <HomeScreen />}
@@ -22,9 +46,6 @@ const BottomTabNavigator = () => {
             tabBarActiveTintColor: "#fff",
             tabBarInactiveTintColor: "black",
             tabBarActiveBackgroundColor: "#E73E1F",
-            tabBarStyle: {
-              height: 45,
-            },
           }}
         >
           <Tab.Screen
@@ -32,7 +53,9 @@ const BottomTabNavigator = () => {
             component={HomeScreen}
             options={{
               tabBarIcon: ({ color }) => (
-                <MaterialIcons name="today" size={24} color={color} />
+                <TouchableOpacity onPress={hapticPress}>
+                  <MaterialIcons name="today" size={24} color={color} />
+                </TouchableOpacity>
               ),
             }}
           />
@@ -42,7 +65,9 @@ const BottomTabNavigator = () => {
             component={HistoryScreen}
             options={{
               tabBarIcon: ({ color }) => (
-                <MaterialIcons name="history" size={24} color={color} />
+                <TouchableOpacity onPress={hapticPress}>
+                  <MaterialIcons name="history" size={24} color={color} />
+                </TouchableOpacity>
               ),
             }}
           />

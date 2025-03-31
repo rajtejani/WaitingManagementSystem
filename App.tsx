@@ -6,15 +6,17 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppContext, AppProvider } from "./src/Context/AppContext";
 import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
 import LogInScreen from "./src/Screens/LogInScreen";
-
+import AddGuestList from "./src/components/AddGuestList";
+import Toast from "react-native-toast-message";
 const Stack = createStackNavigator();
 
-export default function App() {
+export default function App(props: any) {
   return (
     <View style={{ backgroundColor: "#F6F1E9", flex: 1 }}>
       <SafeAreaProvider>
         <AppProvider>
           <Routes />
+          <Toast />
         </AppProvider>
       </SafeAreaProvider>
     </View>
@@ -22,7 +24,8 @@ export default function App() {
 }
 
 const Routes = () => {
-  const { token, user } = useContext(AppContext);
+  const { token, user, isLoading } = useContext(AppContext);
+  console.log(" !!!!!! {token, user} ", { token, user, isLoading });
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -33,9 +36,9 @@ const Routes = () => {
         ) : (
           <>
             <Stack.Screen name="Home" component={BottomTabNavigator} />
+            <Stack.Screen name="Guest" component={AddGuestList} />
           </>
         )}
-        {/* // <Stack.Screen name="Main" component={RoleSelection} /> */}
       </Stack.Navigator>
     </NavigationContainer>
   );

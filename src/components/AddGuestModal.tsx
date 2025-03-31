@@ -23,12 +23,14 @@ interface AddGuestModalProps {
 
 const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState("");
+  const [nameError, setNameError] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [numberOfGuest, setNumberOfGuest] = useState("");
   const [numberOfGuests, setnumberOfGuests] = useState<number | null>(null);
   const [willingToShare, setWillingToShare] = useState(false);
   const [waitingTime, setWaitingTime] = useState<number | null>(null);
+  const [waitingError, setWaitingError] = useState("");
 
   const resetForm = () => {
     setName("");
@@ -46,18 +48,19 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
   };
 
   const handleAddGuest = async () => {
-    if (!name.trim()) {
-      Alert.alert("Error", "Please enter guest name");
-      return;
+    if (!name) {
+      setNameError("Please enter guest name");
+    } else {
+      setNameError("");
     }
 
-    if (!phoneNumber.trim()) {
-      Alert.alert("Error", "Please enter guest phone number");
+    if (!phoneError.trim()) {
+      setPhoneError("Please enter mobile number");
       return;
     }
 
     if (waitingTime === null) {
-      Alert.alert("Error", "Please enter waiting time");
+      setNameError("Please enter waiting time");
       return;
     }
 
@@ -78,6 +81,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
       // First make API call
       // Then add to local state via context
       const response = await newGuestEntryAPI(guestData);
+      // setGuests([...guests, newGuest]);
       console.log(" >>>>>> resopnse", response);
       if (response.status === 201) {
         handleClose();
@@ -111,6 +115,7 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
 
   return (
     <Modal
+      style={styles.centeredView}
       visible={visible}
       transparent
       animationType="fade"
@@ -125,12 +130,15 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Guest Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, nameError ? styles.inputError : null]}
                   value={name}
                   onChangeText={setName}
                   placeholder="Enter guest name"
                   placeholderTextColor={"#222222"}
                 />
+                {nameError ? (
+                  <Text style={styles.errorText}>{nameError}</Text>
+                ) : null}
               </View>
 
               <View style={styles.formGroup}>
@@ -151,7 +159,10 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Waiting Time</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    waitingError ? styles.inputError : null,
+                  ]}
                   keyboardType="phone-pad"
                   placeholder="Enter Waiting Time"
                   placeholderTextColor={"#222222"}
@@ -164,6 +175,9 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
                     }
                   }}
                 />
+                {waitingError ? (
+                  <Text style={styles.errorText}>{waitingError}</Text>
+                ) : null}
               </View>
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Number of Guests</Text>
@@ -250,6 +264,12 @@ const AddGuestModal: React.FC<AddGuestModalProps> = ({ visible, onClose }) => {
 };
 
 const styles = StyleSheet.create({
+  centeredView: {
+    // width: "100%",
+    // height: "100%",
+    // zIndex: 1000,
+    // position: "relative",
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
@@ -257,7 +277,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    width: "90%",
+    width: "100%",
     backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 20,

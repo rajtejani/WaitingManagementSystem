@@ -91,6 +91,9 @@ const WaitingList = () => {
       }
     },
   };
+  const hapticPress = () => {
+    RNHapticFeedback.trigger("soft", defaultOptions);
+  };
   // const successSound = new Sound(
   //   "my_file_name.mp3",
   //   Sound.MAIN_BUNDLE,
@@ -124,7 +127,7 @@ const WaitingList = () => {
   };
 
   const handleCall = (phoneNumber: string) => {
-    RNHapticFeedback.trigger("impactMedium", defaultOptions);
+    hapticPress();
     playSound();
     const telUrl = `tel:${phoneNumber}`;
     Linking.canOpenURL(telUrl)
@@ -141,6 +144,8 @@ const WaitingList = () => {
   };
 
   const handleCancel = (id: string) => {
+    hapticPress();
+
     Alert.alert(
       "Cancel Waiting",
       "Are you sure you want to cancel this guest?",
@@ -156,7 +161,7 @@ const WaitingList = () => {
   };
 
   const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
-    RNHapticFeedback.trigger("impactMedium", defaultOptions);
+    hapticPress();
 
     try {
       setLoadingIds((prev) => {
@@ -173,7 +178,6 @@ const WaitingList = () => {
     } catch (error) {
       setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
     }
-    playSound();
   };
 
   const formatWaitingTime = (waitingTime: number) => {

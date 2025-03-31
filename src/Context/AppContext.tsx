@@ -52,6 +52,7 @@ interface AppContextType {
     isTodaysGuestLoading: boolean;
     isGuestHistoryLoading: boolean;
   };
+  isLoading: boolean;
   setLoaders: Dispatch<
     SetStateAction<{
       isTodaysGuestLoading: boolean;
@@ -90,6 +91,7 @@ export const AppContext = createContext<AppContextType>({
     isTodaysGuestLoading: false,
     isGuestHistoryLoading: false,
   },
+  isLoading: true,
   setTodaysGuest: () => {},
   setGuestHistory: () => {},
 });
@@ -131,11 +133,15 @@ export const AppProvider: React.FC<{
 
   const loginUserAction = async (token: string, user: User) => {
     await AsyncStorage.setItem("@API_TOKEN", token);
-    await AsyncStorage.setItem("@ROLE", user.role);
 
     apiInstance.defaults.headers["auth_token"] = token;
     setUser(user);
     setToken(token);
+
+    const response = await getTodaysGuestAPI();
+    if (response.status === 200) {
+      setTodaysGuest(response.data.guests);
+    }
   };
 
   const getTodaysGuest = async () => {
@@ -248,6 +254,7 @@ export const AppProvider: React.FC<{
         setTodaysGuest,
         setGuestHistory,
         setLoaders,
+        isLoading,
       }}
     >
       {children}
