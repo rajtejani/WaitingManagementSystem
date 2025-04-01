@@ -23,11 +23,7 @@ export function loginAPI(payload: { username: string; password: string }) {
 
 export function verifyAPI(token: string) {
   return apiInstance
-    .get("/auth/verify", {
-      // headers: {
-      //   auth_token: token,
-      // },
-    })
+    .get("/auth/verify")
     .then((response) => {
       Toast.show({
         type: "success",

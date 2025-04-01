@@ -9,7 +9,6 @@ import { UserRolesTypes } from "../utils/common.utils";
 export const RoleSelection = ({ navigation }: any) => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const { updateUserRole } = useAppContext();
-  const [isCheckingRole, setIsCheckingRole] = useState(false);
 
   useEffect(() => {
     const checkUserRole = async () => {

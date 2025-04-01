@@ -1,28 +1,25 @@
 import MaterialIcons from "react-native-vector-icons/Feather";
 
+import { useNavigation } from "@react-navigation/native";
+import { uniqBy } from "lodash";
 import React, { useContext, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   Keyboard,
-  Modal,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  ActivityIndicator,
 } from "react-native";
-import { uniqBy } from "lodash";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { AppContext, type GuestInput } from "../Context/AppContext";
-import { getTodaysGuestAPI, newGuestEntryAPI } from "../apis/guest";
-import { useNavigation } from "@react-navigation/native";
-import Toast from "react-native-toast-message";
 import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { AppContext, type GuestInput } from "../Context/AppContext";
+import { newGuestEntryAPI } from "../apis/guest";
 
 const AddGuestList = (props: any) => {
   const { setTodaysGuest } = useContext(AppContext);
@@ -31,12 +28,10 @@ const AddGuestList = (props: any) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState("");
   const [numberOfGuest, setNumberOfGuest] = useState("");
-  const [numberOfGuests, setnumberOfGuests] = useState<number | null>(null);
+  const [numberOfGuests, setNumberOfGuests] = useState<number | null>(null);
   const [willingToShare, setWillingToShare] = useState(false);
   const [waitingTime, setWaitingTime] = useState<number | null>(null);
   const [waitingError, setWaitingError] = useState("");
-  const [hours, setHours] = useState<number | null>(null);
-  const [minutes, setMinutes] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
   const defaultOptions = {
@@ -70,7 +65,7 @@ const AddGuestList = (props: any) => {
     setPhoneNumber("");
     setPhoneError("");
     setNumberOfGuest("");
-    setnumberOfGuests(null);
+    setNumberOfGuests(null);
     setWillingToShare(false);
     setWaitingTime(null);
   };
@@ -112,15 +107,6 @@ const AddGuestList = (props: any) => {
     } else {
       setWaitingError("");
     }
-    // if (hours === null || hours < 0) {
-    //   setWaitingError("Please enter a valid number of hours");
-    //   isValid = false;
-    // } else if (minutes === null || minutes < 0 || minutes >= 60) {
-    //   setWaitingError("Please enter a valid number of minutes");
-    //   isValid = false;
-    // } else {
-    //   setWaitingError("");
-    // }
 
     if (isValid) {
       // Call the API to add the guest
@@ -160,10 +146,10 @@ const AddGuestList = (props: any) => {
     }
   };
 
-  const handlenumberOfGuestsSelect = (count: number) => {
+  const handleNumberOfGuestsSelect = (count: number) => {
     hapticPress();
 
-    setnumberOfGuests(count);
+    setNumberOfGuests(count);
     setNumberOfGuest(count.toString()); // Update numberOfGuest state
     if (count !== 2) {
       setWillingToShare(false);
@@ -188,8 +174,6 @@ const AddGuestList = (props: any) => {
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <KeyboardAwareScrollView>
-                {/* <Text style={styles.modalTitle}>Add to Waiting List</Text> */}
-
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Guest Name</Text>
                   <TextInput
@@ -245,51 +229,6 @@ const AddGuestList = (props: any) => {
                     <Text style={styles.errorText}>{waitingError}</Text>
                   ) : null}
                 </View>
-                {/* <View style={styles.formGroup}>
-                  <Text style={styles.label}>Waiting Time</Text>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <View style={{ flex: 1, marginRight: 10 }}>
-                      <TextInput
-                        style={styles.input}
-                        keyboardType="number-pad"
-                        placeholder="Hours"
-                        placeholderTextColor={"#222222"}
-                        value={waitingTime?.toString()}
-                        onChangeText={(text) => {
-                          if (text !== "") {
-                            setHours(parseInt(text));
-                          } else {
-                            setHours(null);
-                          }
-                        }}
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <TextInput
-                        style={styles.input}
-                        keyboardType="number-pad"
-                        placeholder="Minutes"
-                        placeholderTextColor={"#222222"}
-                        value={waitingTime?.toString()}
-                        onChangeText={(text) => {
-                          if (text !== "") {
-                            setMinutes(parseInt(text));
-                          } else {
-                            setMinutes(null);
-                          }
-                        }}
-                      />
-                    </View>
-                  </View>
-                  {waitingError ? (
-                    <Text style={styles.errorText}>{waitingError}</Text>
-                  ) : null}
-                </View> */}
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Number of Guests</Text>
                   <TextInput
@@ -298,7 +237,7 @@ const AddGuestList = (props: any) => {
                     onChangeText={(text) => {
                       setNumberOfGuest(text);
                       if (text !== "") {
-                        setnumberOfGuests(parseInt(text));
+                        setNumberOfGuests(parseInt(text));
                       }
                     }}
                     keyboardType="phone-pad"
@@ -314,7 +253,7 @@ const AddGuestList = (props: any) => {
                           numberOfGuests === count &&
                             styles.numberOfGuestsButtonActive,
                         ]}
-                        onPress={() => handlenumberOfGuestsSelect(count)}
+                        onPress={() => handleNumberOfGuestsSelect(count)}
                       >
                         <Text
                           style={[
@@ -391,12 +330,6 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "100%",
     padding: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
   },
   formGroup: {
     marginBottom: 16,
@@ -486,16 +419,6 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 20,
     fontWeight: "600",
-  },
-  cancelButton: {
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    color: "#000",
-    fontSize: 20,
-    fontWeight: 500,
   },
 });
 

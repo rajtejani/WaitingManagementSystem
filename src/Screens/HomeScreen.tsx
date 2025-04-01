@@ -17,7 +17,6 @@ const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
     "upcoming"
   );
-  const [isAddModalVisible, setAddModalVisible] = useState(false);
   const { todaysGuest, role } = useAppContext();
 
   const upcomingGuestsCount = todaysGuest?.filter(
@@ -72,10 +71,7 @@ const HomeScreen = () => {
             </Text>
           </View>
           {role !== UserRolesTypes.TableManager && (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleIconPress}
-            >
+            <TouchableOpacity onPress={handleIconPress}>
               <MaterialIcons name="add" size={28} color="#E73E1F" />
             </TouchableOpacity>
           )}
@@ -129,11 +125,6 @@ const HomeScreen = () => {
           {activeTab === "upcoming" ? <WaitingList /> : <CompletedList />}
         </View>
       </View>
-
-      {/* <AddGuestModal
-        visible={isAddModalVisible}
-        onClose={() => setAddModalVisible(false)}
-      /> */}
     </SafeAreaView>
   );
 };
@@ -161,14 +152,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontFamily: "Poppins",
   },
-  addButton: {
-    // backgroundColor: "#E73E1F",
-    // width: 34,
-    // height: 34,
-    // borderRadius: 4,
-    // justifyContent: "center",
-    // alignItems: "center",
-  },
+
   waitingTimeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",

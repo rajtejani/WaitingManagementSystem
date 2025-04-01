@@ -1,5 +1,3 @@
-import { format, parseISO } from "date-fns";
-import { capitalize, cloneDeep } from "lodash";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,12 +15,13 @@ import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { format, parseISO } from "date-fns";
+import { capitalize, cloneDeep } from "lodash";
 import { Guest, StatusEnum, useAppContext } from "../Context/AppContext";
-
 import { updateGuestStatusAPI } from "../apis/guest";
 import { UserRolesTypes } from "../utils/common.utils";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const WaitingList = () => {
   const { role, todaysGuest, loaders } = useAppContext();
@@ -94,23 +93,6 @@ const WaitingList = () => {
   const hapticPress = () => {
     RNHapticFeedback.trigger("soft", defaultOptions);
   };
-  // const successSound = new Sound(
-  //   "my_file_name.mp3",
-  //   Sound.MAIN_BUNDLE,
-  //   (error) => {
-  //     if (error) {
-  //       console.log("Failed to load the sound", error);
-  //     }
-  //   }
-  // );
-  const playSound = () => {
-    // TODO: Change Sound file
-    // successSound.play((success) => {
-    //   if (!success) {
-    //     console.log("Sound playback failed");
-    //   }
-    // });
-  };
   const getStatusColor = (status: StatusEnum) => {
     switch (status) {
       case StatusEnum.waiting:
@@ -128,7 +110,6 @@ const WaitingList = () => {
 
   const handleCall = (phoneNumber: string) => {
     hapticPress();
-    playSound();
     const telUrl = `tel:${phoneNumber}`;
     Linking.canOpenURL(telUrl)
       .then((supported) => {
@@ -180,12 +161,6 @@ const WaitingList = () => {
     }
   };
 
-  const formatWaitingTime = (waitingTime: number) => {
-    const hours = Math.floor(waitingTime / 60);
-    const minutes = waitingTime % 60;
-    return `${hours}h ${minutes}m`;
-  };
-
   const renderItem = ({ item }: { item: Guest }) => {
     const statusColor = getStatusColor(item.status);
 
@@ -196,10 +171,10 @@ const WaitingList = () => {
             <View style={styles.guestInfo}>
               <View style={styles.guestNameContainer}>
                 <View>
-                  <View style={styles.iconContainer}>
+                  <View>
                     <Text style={[styles.guestName]}>{item.name}</Text>
                   </View>
-                  <View style={styles.iconContainer}>
+                  <View>
                     <Text style={[styles.guestPhone]}>{item.phoneNumber}</Text>
                   </View>
                 </View>
@@ -258,14 +233,12 @@ const WaitingList = () => {
                       },
                     ]}
                   ></Animated.View>
-                  {/* <View style={styles.innerBox} /> */}
                   <View>
                     <Text style={[styles.statusText, { color: statusColor }]}>
                       {capitalize(item.status.toString())}
                     </Text>
                   </View>
                 </View>
-                {/* </Animated.View> */}
               </View>
             </View>
           </View>
@@ -461,7 +434,7 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 50,
     backgroundColor: "#007AFF",
-    elevation: 5, // Shadow for Android
+    elevation: 5,
     shadowColor: "#007AFF",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
@@ -525,10 +498,6 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontFamily: "Poppins",
   },
-  iconContainer: {
-    // flexDirection: "row",
-    // alignItems: "center",
-  },
   guestPhone: {
     fontFamily: "Poppins",
     fontSize: 14,
@@ -553,7 +522,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginRight: 16,
-    // marginBottom: 8,
   },
   timeText: {
     fontSize: 14,
@@ -610,7 +578,6 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: "#C70039",
     paddingVertical: 8,
-    // paddingHorizontal: 16,
     borderRadius: 4,
     width: 100,
     fontWeight: "bold",

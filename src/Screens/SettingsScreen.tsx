@@ -19,13 +19,11 @@ const SettingsScreen = () => {
   const [managers, setManagers] = useState<Manager[]>([]);
   const [newManagerName, setNewManagerName] = useState("");
   const [editingManager, setEditingManager] = useState<Manager | null>(null);
-  const [nameError, setNameError] = useState("");
 
   const handleAddManager = () => {
     if (!newManagerName.trim()) {
       Alert.alert("Error", "please enter a manager name");
       return;
-      // setNameError("please enter name");
     }
     const newManager: Manager = {
       id: Date.now(), // Unique ID
@@ -158,11 +156,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#F6F1E9",
   },
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginTop: 5,
-  },
   buttonContainer: {
     flexDirection: "column",
     paddingTop: 18,
@@ -178,20 +171,6 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#FFF",
     fontSize: 20,
-    fontWeight: "600",
-  },
-  saveButton: {
-    backgroundColor: "#E73E1F",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 4,
-    alignItems: "center",
-    marginTop: 16,
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontFamily: "Poppins",
-    fontSize: 16,
     fontWeight: "600",
   },
   managerItem: {
@@ -226,18 +205,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 14,
   },
-  editForm: {
-    padding: 16,
-  },
-  updateButton: {
-    backgroundColor: "#4A90E2",
-    padding: 8,
-    borderRadius: 4,
-  },
-  updateButtonText: {
-    color: "#fff",
-    fontSize: 14,
-  },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
@@ -249,27 +216,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     width: "80%",
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 30,
-    textAlign: "center",
-  },
-  modalInput: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 10,
-  },
-  modalUpdateButton: {
-    backgroundColor: "#4A90E2",
-    padding: 10,
-    borderRadius: 5,
-  },
-  modalUpdateButtonText: {
-    color: "#fff",
-    fontSize: 16,
   },
 });
 

@@ -8,14 +8,13 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { loginAPI, verifyAPI } from "../apis/auth";
-import { AppContext } from "../Context/AppContext";
-import MaterialIcons from "react-native-vector-icons/Feather";
 import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
-import Toast from "react-native-toast-message";
+import MaterialIcons from "react-native-vector-icons/Feather";
+import { loginAPI, verifyAPI } from "../apis/auth";
+import { AppContext } from "../Context/AppContext";
 const LogInScreen = () => {
   const { loginUserAction } = useContext(AppContext);
   // TODO: REMOVE static username and password

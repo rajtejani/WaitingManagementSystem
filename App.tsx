@@ -25,7 +25,6 @@ export default function App(props: any) {
 
 const Routes = () => {
   const { token, user, isLoading } = useContext(AppContext);
-  console.log(" !!!!!! {token, user} ", { token, user, isLoading });
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>

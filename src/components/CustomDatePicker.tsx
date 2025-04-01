@@ -1,8 +1,17 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useState } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useState } from "react";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import NativeHapticFeedback, {
+  HapticFeedbackTypes,
+  HapticOptions,
+} from "react-native-haptic-feedback";
 const CustomDatePicker = ({
   onDateSelected,
 }: {
@@ -10,17 +19,41 @@ const CustomDatePicker = ({
 }) => {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const defaultOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
 
+  const RNHapticFeedback = {
+    trigger(
+      type:
+        | keyof typeof HapticFeedbackTypes
+        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
+      options: HapticOptions = {}
+    ) {
+      try {
+        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
+      } catch {
+        console.warn("RNReactNativeHapticFeedback is not available");
+      }
+    },
+  };
+  const hapticPress = () => {
+    RNHapticFeedback.trigger("soft", defaultOptions);
+  };
   const getCurrentDate = () => {
     const now = new Date();
     now.setHours(23, 59, 59, 999); // Set to end of day for inclusive comparison
     return now;
   };
 
-  const showDatePicker = () => setDatePickerVisibility(true);
+  const showDatePicker = () => {
+    hapticPress();
+    setDatePickerVisibility(true);
+  };
 
   const handleChange = (event: any, date?: Date) => {
-    setDatePickerVisibility(Platform.OS === 'ios');
+    setDatePickerVisibility(Platform.OS === "ios");
     if (date) {
       setSelectedDate(date);
       onDateSelected(date);
@@ -31,7 +64,7 @@ const CustomDatePicker = ({
     <View style={styles.container}>
       <TouchableOpacity style={styles.inputContainer} onPress={showDatePicker}>
         <Text style={styles.inputText}>
-          {selectedDate.toLocaleDateString('en-GB')}
+          {selectedDate.toLocaleDateString("en-GB")}
         </Text>
         <FontAwesome name="calendar" size={20} color="#000" />
       </TouchableOpacity>
@@ -50,21 +83,21 @@ const CustomDatePicker = ({
 };
 
 const styles = StyleSheet.create({
-  container: { width: '100%', marginTop: 10, marginBottom: 10 },
+  container: { width: "100%", marginTop: 10, marginBottom: 10 },
   inputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#000',
+    borderColor: "#000",
     borderRadius: 4,
     paddingVertical: 12,
     paddingHorizontal: 15,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   inputText: {
     fontSize: 16,
-    color: '#888',
+    color: "#888",
   },
 });
 

@@ -59,7 +59,6 @@ const BottomTabNavigator = () => {
               ),
             }}
           />
-
           <Tab.Screen
             name="History"
             component={HistoryScreen}
@@ -71,16 +70,6 @@ const BottomTabNavigator = () => {
               ),
             }}
           />
-
-          {/* <Tab.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{
-              tabBarIcon: ({ color }) => (
-                <MaterialIcons name="settings" size={24} color={color} />
-              ),
-            }}
-          /> */}
         </Tab.Navigator>
       )}
     </>
