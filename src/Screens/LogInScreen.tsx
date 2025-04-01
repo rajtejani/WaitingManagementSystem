@@ -16,7 +16,7 @@ import MaterialIcons from "react-native-vector-icons/Feather";
 import { loginAPI, verifyAPI } from "../apis/auth";
 import { AppContext } from "../Context/AppContext";
 const LogInScreen = () => {
-  const { loginUserAction } = useContext(AppContext);
+  const { loginUserAction, getCurrentUser } = useContext(AppContext);
   // TODO: REMOVE static username and password
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -75,10 +75,6 @@ const LogInScreen = () => {
       if (response.status === 200) {
         const { token, user } = response.data;
         loginUserAction(token, user);
-        const userData = await verifyAPI(token);
-        if (userData) {
-          loginUserAction(token, user);
-        }
       }
       setIsLoading(false);
     } catch (error) {
@@ -196,7 +192,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F6F1E9",
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 2,
     borderColor: "#000",
     borderWidth: 1,

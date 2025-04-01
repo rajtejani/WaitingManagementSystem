@@ -1,3 +1,5 @@
+import { format, parseISO } from "date-fns";
+import { capitalize, cloneDeep } from "lodash";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -15,16 +17,14 @@ import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
-import { format, parseISO } from "date-fns";
-import { capitalize, cloneDeep } from "lodash";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { Guest, StatusEnum, useAppContext } from "../Context/AppContext";
 import { updateGuestStatusAPI } from "../apis/guest";
 import { UserRolesTypes } from "../utils/common.utils";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const WaitingList = () => {
-  const { role, todaysGuest, loaders } = useAppContext();
+  const { role, todaysGuest, loaders, setTodaysGuest } = useAppContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const defaultOptions = {
@@ -143,7 +143,21 @@ const WaitingList = () => {
 
   const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
     hapticPress();
-
+    try {
+      const response = await updateGuestStatusAPI(id, newStatus);
+      console.log("response======>", response);
+      // Update the AppContext state on success
+      setTodaysGuest((prevGuests) => {
+        return prevGuests.map((guest) => {
+          if (guest._id === id) {
+            return { ...guest, status: newStatus };
+          }
+          return guest;
+        });
+      });
+    } catch (error) {
+      console.error(error);
+    }
     try {
       setLoadingIds((prev) => {
         if (!prev.includes(id)) {
@@ -208,9 +222,7 @@ const WaitingList = () => {
                         size={18}
                         style={[styles.icon]}
                       />
-                      <Text style={[styles.timeText]}>
-                        {item.waitingTime} Mins
-                      </Text>
+                      <Text style={[styles.timeText]}>{item.waitingTime}</Text>
                     </View>
                   </View>
                 </View>

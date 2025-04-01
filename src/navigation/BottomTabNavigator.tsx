@@ -1,15 +1,14 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
+import NativeHapticFeedback, {
+  HapticFeedbackTypes,
+  HapticOptions,
+} from "react-native-haptic-feedback";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAppContext } from "../Context/AppContext";
 import HistoryScreen from "../Screens/HistoryScreen";
 import HomeScreen from "../Screens/HomeScreen";
 import { UserRolesTypes } from "../utils/common.utils";
-import NativeHapticFeedback, {
-  HapticFeedbackTypes,
-  HapticOptions,
-} from "react-native-haptic-feedback";
-import { TouchableOpacity } from "react-native";
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
@@ -35,6 +34,7 @@ const BottomTabNavigator = () => {
   const hapticPress = () => {
     RNHapticFeedback.trigger("soft", defaultOptions);
   };
+
   return (
     <>
       {role === UserRolesTypes.TableManager && <HomeScreen />}
@@ -46,6 +46,7 @@ const BottomTabNavigator = () => {
             tabBarActiveTintColor: "#fff",
             tabBarInactiveTintColor: "black",
             tabBarActiveBackgroundColor: "#E73E1F",
+            animation: "fade",
           }}
         >
           <Tab.Screen
@@ -53,10 +54,13 @@ const BottomTabNavigator = () => {
             component={HomeScreen}
             options={{
               tabBarIcon: ({ color }) => (
-                <TouchableOpacity onPress={hapticPress}>
-                  <MaterialIcons name="today" size={24} color={color} />
-                </TouchableOpacity>
+                <MaterialIcons name="today" size={24} color={color} />
               ),
+            }}
+            listeners={{
+              tabPress: (e) => {
+                hapticPress();
+              },
             }}
           />
           <Tab.Screen
@@ -64,10 +68,13 @@ const BottomTabNavigator = () => {
             component={HistoryScreen}
             options={{
               tabBarIcon: ({ color }) => (
-                <TouchableOpacity onPress={hapticPress}>
-                  <MaterialIcons name="history" size={24} color={color} />
-                </TouchableOpacity>
+                <MaterialIcons name="history" size={24} color={color} />
               ),
+            }}
+            listeners={{
+              tabPress: (e) => {
+                hapticPress();
+              },
             }}
           />
         </Tab.Navigator>

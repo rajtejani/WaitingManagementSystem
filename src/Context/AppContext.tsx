@@ -26,7 +26,7 @@ export interface GuestInput {
   name: string;
   phoneNumber: string;
   numberOfGuests: number;
-  waitingTime: number;
+  waitingTime: string;
   preferSharing?: boolean;
 }
 
@@ -41,6 +41,7 @@ export interface Guest extends GuestInput {
   _id: string;
   status: StatusEnum;
   entryTime: string;
+  waitingTime: string;
 }
 interface AppContextType {
   user?: User;
@@ -60,6 +61,7 @@ interface AppContextType {
     }>
   >;
   loginUserAction: (token: string, user: User) => void;
+  getCurrentUser: () => void;
   setTodaysGuest: Dispatch<SetStateAction<Guest[]>>;
   setGuestHistory: Dispatch<SetStateAction<Guest[]>>;
 }
@@ -87,6 +89,7 @@ export const AppContext = createContext<AppContextType>({
   guestHistory: [],
   loginUserAction: (token: string, user: User) => {},
   setLoaders: () => {},
+  getCurrentUser: () => {},
   loaders: {
     isTodaysGuestLoading: false,
     isGuestHistoryLoading: false,
@@ -137,10 +140,18 @@ export const AppProvider: React.FC<{
     apiInstance.defaults.headers["auth_token"] = token;
     setUser(user);
     setToken(token);
+    try {
+      setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
 
-    const response = await getTodaysGuestAPI();
-    if (response.status === 200) {
-      setTodaysGuest(response.data.guests);
+      const response = await getTodaysGuestAPI();
+      setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
+
+      if (response.status === 200) {
+        setTodaysGuest(response.data.guests);
+      }
+    } catch (error) {
+      console.log(" >>> error ", error);
+      setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
     }
   };
 
@@ -255,6 +266,7 @@ export const AppProvider: React.FC<{
         setGuestHistory,
         setLoaders,
         isLoading,
+        getCurrentUser,
       }}
     >
       {children}

@@ -18,6 +18,8 @@ import NativeHapticFeedback, {
   HapticOptions,
 } from "react-native-haptic-feedback";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import SelectDropdown from "react-native-select-dropdown";
+import Icon from "react-native-vector-icons/Feather";
 import { AppContext, type GuestInput } from "../Context/AppContext";
 import { newGuestEntryAPI } from "../apis/guest";
 
@@ -30,9 +32,11 @@ const AddGuestList = (props: any) => {
   const [numberOfGuest, setNumberOfGuest] = useState("");
   const [numberOfGuests, setNumberOfGuests] = useState<number | null>(null);
   const [willingToShare, setWillingToShare] = useState(false);
-  const [waitingTime, setWaitingTime] = useState<number | null>(null);
+  const [waitingTime, setWaitingTime] = useState<string | null>(null);
   const [waitingError, setWaitingError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [hours, setHours] = useState<string | null>(null);
+  const [minutes, setMinutes] = useState<string | null>(null);
   const navigation = useNavigation();
   const defaultOptions = {
     enableVibrateFallback: true,
@@ -68,6 +72,8 @@ const AddGuestList = (props: any) => {
     setNumberOfGuests(null);
     setWillingToShare(false);
     setWaitingTime(null);
+    setHours(null);
+    setMinutes(null);
   };
   const handleClose = () => {
     resetForm();
@@ -112,11 +118,11 @@ const AddGuestList = (props: any) => {
       // Call the API to add the guest
       try {
         const guestData: GuestInput = {
-          name: userName,
+          name: userName!,
           phoneNumber: phoneNumber.trim(),
           numberOfGuests: numberOfGuests!,
           preferSharing: numberOfGuests === 2 ? willingToShare : false,
-          waitingTime: waitingTime!,
+          waitingTime: `${hours}:${minutes}`,
         };
         const response = await newGuestEntryAPI(guestData);
         if (response.status === 201) {
@@ -155,29 +161,49 @@ const AddGuestList = (props: any) => {
       setWillingToShare(false);
     }
   };
+  const hourOptions = [
+    { hour: "00" },
+    { hour: "01" },
+    { hour: "02" },
+    { hour: "03" },
+    { hour: "04" },
+  ];
+  const minutesOptions = [
+    { minute: "05" },
+    { minute: "10" },
+    { minute: "15" },
+    { minute: "20" },
+    { minute: "25" },
+    { minute: "30" },
+    { minute: "45" },
+    { minute: "50" },
+    { minute: "55" },
+  ];
+
   return (
     <>
       <View style={styles.centeredView}>
-        <TouchableOpacity>
-          <MaterialIcons
-            name="arrow-left"
-            size={30}
-            color="black"
-            style={styles.backIcon}
-            onPress={() => {
-              handleIconPress();
-              handleClose();
-            }}
-          />
-        </TouchableOpacity>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
+            <View style={styles.modalHeader}>
+              <MaterialIcons
+                name="arrow-left"
+                size={30}
+                color="black"
+                style={styles.backIcon}
+                onPress={() => {
+                  handleIconPress();
+                  handleClose();
+                }}
+              />
+              <Text style={styles.modalTitle}>Add Guest</Text>
+            </View>
             <View style={styles.modalContent}>
               <KeyboardAwareScrollView>
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Guest Name</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, nameError ? styles.inputError : null]}
                     value={userName}
                     onChangeText={setUserName}
                     placeholder="Enter guest name"
@@ -207,24 +233,125 @@ const AddGuestList = (props: any) => {
                   ) : null}
                 </View>
                 <View style={styles.formGroup}>
-                  <Text style={styles.label}>Waiting Time</Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      waitingError ? styles.inputError : null,
-                    ]}
-                    keyboardType="phone-pad"
-                    placeholder="Enter Waiting Time"
-                    placeholderTextColor={"#222222"}
-                    value={waitingTime?.toString()}
-                    onChangeText={(text) => {
-                      if (text !== "") {
-                        setWaitingTime(parseInt(text));
-                      } else {
-                        setWaitingTime(null);
-                      }
+                  <Text style={styles.label}>
+                    Waiting Time (Hours : Minutes)
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
                     }}
-                  />
+                  >
+                    <View style={{ flex: 1, marginRight: 20 }}>
+                      <SelectDropdown
+                        data={hourOptions}
+                        onSelect={(selectedItem, index) => {
+                          setHours(selectedItem.hour);
+                          if (selectedItem.hour !== null) {
+                            const hoursValue = hours !== null ? hours : "00";
+                            setWaitingTime(
+                              `${selectedItem.hour}:${hoursValue}`
+                            );
+                          }
+                        }}
+                        renderButton={(selectedItem, isOpened) => {
+                          return (
+                            <View style={styles.dropdownButtonStyle}>
+                              <Text style={styles.dropdownButtonTxtStyle}>
+                                {(selectedItem && selectedItem.hour) ||
+                                  "Select Hours"}
+                              </Text>
+                              <Icon
+                                name={isOpened ? "chevron-up" : "chevron-down"}
+                                style={styles.dropdownButtonArrowStyle}
+                              />
+                            </View>
+                          );
+                        }}
+                        renderItem={(item, index, isSelected) => {
+                          return (
+                            <View
+                              style={{
+                                ...styles.dropdownItemStyle,
+                                ...(isSelected && {
+                                  backgroundColor: "#E73E1F",
+                                  color: "#fff",
+                                }),
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.dropdownItemTxtStyle,
+                                  isSelected && {
+                                    color: "#fff",
+                                  },
+                                ]}
+                              >
+                                {item.hour}
+                              </Text>
+                            </View>
+                          );
+                        }}
+                        showsVerticalScrollIndicator={false}
+                        dropdownStyle={styles.dropdownMenuStyle}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <SelectDropdown
+                        data={minutesOptions}
+                        onSelect={(selectedItem, index) => {
+                          setMinutes(selectedItem.minute);
+                          if (selectedItem.minute !== null) {
+                            const minutesValue =
+                              minutes !== null ? minutes : "00";
+                            setWaitingTime(
+                              `${selectedItem.minute}:${minutesValue}`
+                            );
+                          }
+                        }}
+                        renderButton={(selectedItem, isOpened) => {
+                          return (
+                            <View style={styles.dropdownButtonStyle}>
+                              <Text style={styles.dropdownButtonTxtStyle}>
+                                {(selectedItem && selectedItem.minute) ||
+                                  "Select Minutes"}
+                              </Text>
+                              <Icon
+                                name={isOpened ? "chevron-up" : "chevron-down"}
+                                style={styles.dropdownButtonArrowStyle}
+                              />
+                            </View>
+                          );
+                        }}
+                        renderItem={(item, index, isSelected) => {
+                          return (
+                            <View
+                              style={{
+                                ...styles.dropdownItemStyle,
+                                ...(isSelected && {
+                                  backgroundColor: "#E73E1F",
+                                  color: "#fff",
+                                }),
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.dropdownItemTxtStyle,
+                                  isSelected && {
+                                    color: "#fff",
+                                  },
+                                ]}
+                              >
+                                {item.minute}
+                              </Text>
+                            </View>
+                          );
+                        }}
+                        showsVerticalScrollIndicator={false}
+                        dropdownStyle={styles.dropdownMenuStyle}
+                      />
+                    </View>
+                  </View>
                   {waitingError ? (
                     <Text style={styles.errorText}>{waitingError}</Text>
                   ) : null}
@@ -315,17 +442,33 @@ const AddGuestList = (props: any) => {
 
 const styles = StyleSheet.create({
   centeredView: {
+    backgroundColor: "#F6F1E9",
     width: "100%",
     height: "100%",
   },
-  backIcon: {
-    paddingLeft: 12,
-    paddingTop: 20,
-  },
   modalOverlay: {
-    flex: 1,
+    paddingTop: 40,
     justifyContent: "center",
     alignItems: "center",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    width: "100%",
+  },
+  backIcon: {
+    textAlign: "left",
+    marginLeft: 20,
+  },
+  modalTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingRight: 24,
+    marginRight: 20,
   },
   modalContent: {
     width: "100%",
@@ -345,7 +488,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#F6F1E9",
   },
   inputError: {
     borderColor: "red",
@@ -414,11 +556,61 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginBottom: 8,
+    flexDirection: "row",
+    justifyContent: "center",
   },
   addButtonText: {
     color: "#FFF",
     fontSize: 20,
     fontWeight: "600",
+    marginLeft: 10,
+  },
+
+  dropdownButtonStyle: {
+    // width: 180,
+    // height: 48,
+    padding: 12,
+    borderColor: "#000",
+    borderWidth: 1,
+    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 12,
+  },
+  dropdownButtonTxtStyle: {
+    flex: 1,
+    fontSize: 16,
+    color: "#151E26",
+  },
+  dropdownButtonArrowStyle: {
+    fontSize: 20,
+  },
+  dropdownButtonIconStyle: {
+    fontSize: 28,
+    marginRight: 8,
+  },
+  dropdownMenuStyle: {
+    backgroundColor: "#F6F1E9",
+    borderRadius: 8,
+  },
+  dropdownItemStyle: {
+    width: "100%",
+    flexDirection: "row",
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  dropdownItemTxtStyle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "500",
+    color: "#151E26",
+  },
+  dropdownItemIconStyle: {
+    fontSize: 20,
+    marginRight: 8,
   },
 });
 
