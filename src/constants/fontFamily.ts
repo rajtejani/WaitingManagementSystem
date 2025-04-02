@@ -1,4 +1,4 @@
-import { fontFamilies } from "../constants/ui/fonts";
+import { fontFamilies } from "./fonts";
 
 export const getFontFamily = (
   weight: "normal" | "medium" | "semibold" | "bold"

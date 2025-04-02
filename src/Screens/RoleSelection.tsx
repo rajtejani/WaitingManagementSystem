@@ -9,6 +9,18 @@ import { UserRolesTypes } from "../utils/common.utils";
 export const RoleSelection = ({ navigation }: any) => {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const { updateUserRole } = useAppContext();
+  const saveRole = async () => {
+    if (selectedRole) {
+      await AsyncStorage.setItem("userRole", selectedRole);
+      updateUserRole(selectedRole);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "Home" }],
+        })
+      );
+    }
+  };
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -25,19 +37,6 @@ export const RoleSelection = ({ navigation }: any) => {
     };
     checkUserRole();
   }, [navigation]);
-
-  const saveRole = async () => {
-    if (selectedRole) {
-      await AsyncStorage.setItem("userRole", selectedRole);
-      updateUserRole(selectedRole);
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: "Home" }],
-        })
-      );
-    }
-  };
 
   return (
     <View style={styles.container}>

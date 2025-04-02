@@ -31,9 +31,9 @@ export interface GuestInput {
 }
 
 export enum StatusEnum {
-  "waiting" = "waiting",
-  "Table Ready" = "Table Ready",
-  "In Line" = "In Line",
+  "Waiting" = "waiting",
+  "TableReady" = "Table Ready",
+  "InLine" = "In Line",
   "Seated" = "Seated",
   "Cancelled" = "Cancelled",
 }
@@ -224,7 +224,6 @@ export const AppProvider: React.FC<{
   useEffect(() => {
     if (!!user) {
       getTodaysGuest();
-
       connectAndSubPusher();
     }
 

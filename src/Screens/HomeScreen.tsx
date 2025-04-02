@@ -13,22 +13,20 @@ import Badge from "../components/Badge";
 import CompletedList from "../components/CompletedList";
 import WaitingList from "../components/WaitingList";
 import { UserRolesTypes } from "../utils/common.utils";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
     "upcoming"
   );
   const { todaysGuest, role } = useAppContext();
-
+  const navigation = useNavigation();
   const upcomingGuestsCount = todaysGuest?.filter(
     (guest) => ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   ).length;
   const completedGuestsCount = todaysGuest?.filter((guest) =>
     [StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   ).length;
-  const navigation = useNavigation();
-
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,

@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 
 interface Manager {
   id: number;

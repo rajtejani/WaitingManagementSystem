@@ -12,7 +12,7 @@ import NativeHapticFeedback, {
   HapticOptions,
 } from "react-native-haptic-feedback";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 const CustomDatePicker = ({
   onDateSelected,
 }: {
@@ -24,7 +24,6 @@ const CustomDatePicker = ({
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
-
   const RNHapticFeedback = {
     trigger(
       type:
@@ -52,7 +51,6 @@ const CustomDatePicker = ({
     hapticPress();
     setDatePickerVisibility(true);
   };
-
   const handleChange = (event: any, date?: Date) => {
     setDatePickerVisibility(Platform.OS === "ios");
     if (date) {

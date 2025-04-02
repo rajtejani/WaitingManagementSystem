@@ -5,8 +5,7 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
 import type { Guest } from "../Context/AppContext";
-import { getFontFamily } from "../utils/fontFamily";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { getFontFamily } from "../constants/fontFamily";
 
 const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());

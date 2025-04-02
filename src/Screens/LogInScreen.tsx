@@ -16,9 +16,8 @@ import NativeHapticFeedback, {
 import MaterialIcons from "react-native-vector-icons/Feather";
 import { loginAPI } from "../apis/auth";
 import { AppContext } from "../Context/AppContext";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 const LogInScreen = () => {
-  const { loginUserAction, getCurrentUser } = useContext(AppContext);
   // TODO: REMOVE static username and password
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +26,7 @@ const LogInScreen = () => {
   const [passwordError, setPasswordError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { loginUserAction, getCurrentUser } = useContext(AppContext);
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
@@ -45,6 +45,7 @@ const LogInScreen = () => {
       }
     },
   };
+
   // Function to toggle the password visibility state
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
@@ -68,8 +69,8 @@ const LogInScreen = () => {
     }
 
     if (error) return;
-
     setLoginError("");
+
     try {
       setIsLoading(true);
       const response = await loginAPI({ username: name, password });
@@ -93,7 +94,6 @@ const LogInScreen = () => {
   return (
     <>
       <ScrollView contentContainerStyle={styles.container}>
-        {/* <View style={styles.container}> */}
         <Text style={styles.header}>Welcome to MOG</Text>
         <View style={styles.form}>
           <View style={styles.formGroup}>
@@ -146,7 +146,6 @@ const LogInScreen = () => {
             <Text style={styles.addButtonText}>Submit</Text>
           </TouchableOpacity>
         </View>
-        {/* </View> */}
       </ScrollView>
     </>
   );

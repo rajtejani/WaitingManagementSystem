@@ -1,4 +1,4 @@
-import { isIOS } from "../../utils/platformUtil";
+import { isIOS } from "../utils/platformUtil";
 
 export const fontFamilies = {
   ROBOTO: {

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 
 const Badge = ({
   count = 0,

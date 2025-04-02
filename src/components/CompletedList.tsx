@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { StatusEnum, useAppContext, type Guest } from "../Context/AppContext";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 
 const CompletedList = () => {
   const { todaysGuest } = useAppContext();

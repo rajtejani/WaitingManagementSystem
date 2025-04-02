@@ -22,9 +22,10 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { Guest, StatusEnum, useAppContext } from "../Context/AppContext";
 import { updateGuestStatusAPI } from "../apis/guest";
 import { UserRolesTypes } from "../utils/common.utils";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 
 const WaitingList = () => {
+  const [loadingIds, setLoadingIds] = useState<string[]>([]);
   const { role, todaysGuest, loaders, setTodaysGuest } = useAppContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
@@ -32,15 +33,105 @@ const WaitingList = () => {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
-  const [loadingIds, setLoadingIds] = useState<string[]>([]);
-
   let upcomingGuests = cloneDeep(
     todaysGuest?.filter(
       (guest) =>
         ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
     )
   );
+  const getStatusColor = (status: StatusEnum) => {
+    switch (status) {
+      case StatusEnum.Waiting:
+        return "#A0A0A0";
+      case StatusEnum.TableReady:
+        return "#2196F3";
+      case StatusEnum.InLine:
+        return "#FFC107";
+      case StatusEnum.Seated:
+        return "#4CAF50";
+      case StatusEnum.Cancelled:
+        return "#F44336";
+    }
+  };
+  const RNHapticFeedback = {
+    trigger(
+      type:
+        | keyof typeof HapticFeedbackTypes
+        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
+      options: HapticOptions = {}
+    ) {
+      try {
+        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
+      } catch {
+        console.warn("RNReactNativeHapticFeedback is not available");
+      }
+    },
+  };
+  const hapticPress = () => {
+    RNHapticFeedback.trigger("soft", defaultOptions);
+  };
+  const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
+    hapticPress();
+    try {
+      const response = await updateGuestStatusAPI(id, newStatus);
+      // Update the AppContext state on success
+      setTodaysGuest((prevGuests) => {
+        return prevGuests.map((guest) => {
+          if (guest._id === id) {
+            return { ...guest, status: newStatus };
+          }
+          return guest;
+        });
+      });
+    } catch (error) {
+      console.error(error);
+    }
+    try {
+      setLoadingIds((prev) => {
+        if (!prev.includes(id)) {
+          return [...prev, id];
+        }
 
+        return prev;
+      });
+      const response = await updateGuestStatusAPI(id, newStatus);
+      console.log(" >>>> response ", response);
+      setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
+    } catch (error) {
+      setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
+    }
+  };
+  const handleCall = (phoneNumber: string) => {
+    hapticPress();
+    const telUrl = `tel:${phoneNumber}`;
+    Linking.canOpenURL(telUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(telUrl);
+        } else {
+          Alert.alert("Error", "Phone call not supported on this device");
+        }
+      })
+      .catch(() => {
+        Alert.alert("Error", "An error occurred while trying to call");
+      });
+  };
+  const handleCancel = (id: string) => {
+    Alert.alert(
+      "Cancel Waiting",
+      "Are you sure you want to cancel this guest?",
+      [
+        { text: "No", style: "cancel", onPress: () => hapticPress() },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: () => {
+            handleStatusChange(id, StatusEnum.Cancelled), hapticPress();
+          },
+        },
+      ]
+    );
+  };
   useEffect(() => {
     const pulse = () => {
       Animated.loop(
@@ -76,106 +167,6 @@ const WaitingList = () => {
     };
     pulse();
   }, []);
-
-  const RNHapticFeedback = {
-    trigger(
-      type:
-        | keyof typeof HapticFeedbackTypes
-        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
-      options: HapticOptions = {}
-    ) {
-      try {
-        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
-      } catch {
-        console.warn("RNReactNativeHapticFeedback is not available");
-      }
-    },
-  };
-  const hapticPress = () => {
-    RNHapticFeedback.trigger("soft", defaultOptions);
-  };
-  const getStatusColor = (status: StatusEnum) => {
-    switch (status) {
-      case StatusEnum.waiting:
-        return "#A0A0A0";
-      case StatusEnum["Table Ready"]:
-        return "#2196F3";
-      case StatusEnum["In Line"]:
-        return "#FFC107";
-      case StatusEnum.Seated:
-        return "#4CAF50";
-      case StatusEnum.Cancelled:
-        return "#F44336";
-    }
-  };
-
-  const handleCall = (phoneNumber: string) => {
-    hapticPress();
-    const telUrl = `tel:${phoneNumber}`;
-    Linking.canOpenURL(telUrl)
-      .then((supported) => {
-        if (supported) {
-          return Linking.openURL(telUrl);
-        } else {
-          Alert.alert("Error", "Phone call not supported on this device");
-        }
-      })
-      .catch(() => {
-        Alert.alert("Error", "An error occurred while trying to call");
-      });
-  };
-
-  const handleCancel = (id: string) => {
-    Alert.alert(
-      "Cancel Waiting",
-      "Are you sure you want to cancel this guest?",
-      [
-        { text: "No", style: "cancel", onPress: () => hapticPress() },
-        {
-          text: "Yes",
-          style: "destructive",
-          onPress: () => {
-            handleStatusChange(id, StatusEnum.Cancelled), hapticPress();
-          },
-        },
-      ]
-    );
-  };
-
-  const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
-    hapticPress();
-    try {
-      const response = await updateGuestStatusAPI(id, newStatus);
-      console.log("response======>", response);
-      // Update the AppContext state on success
-      setTodaysGuest((prevGuests) => {
-        return prevGuests.map((guest) => {
-          if (guest._id === id) {
-            return { ...guest, status: newStatus };
-          }
-          return guest;
-        });
-      });
-    } catch (error) {
-      console.error(error);
-    }
-    try {
-      setLoadingIds((prev) => {
-        if (!prev.includes(id)) {
-          return [...prev, id];
-        }
-
-        return prev;
-      });
-      const response = await updateGuestStatusAPI(id, newStatus);
-
-      console.log(" >>>> response ", response);
-      setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
-    } catch (error) {
-      setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
-    }
-  };
-
   const renderItem = ({ item }: { item: Guest }) => {
     const statusColor = getStatusColor(item.status);
 
@@ -277,13 +268,13 @@ const WaitingList = () => {
                 )}
               {role === UserRolesTypes.TableManager && (
                 <>
-                  {item.status === StatusEnum.waiting && (
+                  {item.status === StatusEnum.Waiting && (
                     <TouchableOpacity
                       style={styles.completeButton(
-                        getStatusColor(StatusEnum["Table Ready"])
+                        getStatusColor(StatusEnum.TableReady)
                       )}
                       onPress={() =>
-                        handleStatusChange(item._id, StatusEnum["Table Ready"])
+                        handleStatusChange(item._id, StatusEnum.TableReady)
                       }
                     >
                       {loadingIds.includes(item._id) && (
@@ -292,7 +283,7 @@ const WaitingList = () => {
                       <Text style={styles.completeText}>Table Ready</Text>
                     </TouchableOpacity>
                   )}
-                  {item.status === StatusEnum["In Line"] && (
+                  {item.status === StatusEnum.InLine && (
                     <TouchableOpacity
                       style={styles.completeButton(
                         getStatusColor(StatusEnum.Seated)
@@ -312,13 +303,13 @@ const WaitingList = () => {
               {role !== UserRolesTypes.TableManager && (
                 <>
                   <>
-                    {item.status === StatusEnum["Table Ready"] && (
+                    {item.status === StatusEnum.TableReady && (
                       <TouchableOpacity
                         style={styles.completeButton(
-                          getStatusColor(StatusEnum["In Line"])
+                          getStatusColor(StatusEnum.InLine)
                         )}
                         onPress={() =>
-                          handleStatusChange(item._id, StatusEnum["In Line"])
+                          handleStatusChange(item._id, StatusEnum.InLine)
                         }
                       >
                         {loadingIds.includes(item._id) && (
@@ -327,7 +318,7 @@ const WaitingList = () => {
                         <Text style={styles.completeText}>In Line</Text>
                       </TouchableOpacity>
                     )}
-                    {item.status === StatusEnum["In Line"] && (
+                    {item.status === StatusEnum.InLine && (
                       <TouchableOpacity
                         style={styles.completeButton(
                           getStatusColor(StatusEnum.Seated)

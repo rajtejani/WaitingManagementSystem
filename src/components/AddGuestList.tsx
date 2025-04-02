@@ -22,7 +22,7 @@ import SelectDropdown from "react-native-select-dropdown";
 import Icon from "react-native-vector-icons/Feather";
 import { AppContext, type GuestInput } from "../Context/AppContext";
 import { newGuestEntryAPI } from "../apis/guest";
-import { getFontFamily } from "../utils/fontFamily";
+import { getFontFamily } from "../constants/fontFamily";
 
 const AddGuestList = (props: any) => {
   const { setTodaysGuest } = useContext(AppContext);
@@ -39,11 +39,29 @@ const AddGuestList = (props: any) => {
   const [hours, setHours] = useState<string | null>(null);
   const [minutes, setMinutes] = useState<string | null>(null);
   const navigation = useNavigation();
+  const hourOptions = [
+    { hour: "00" },
+    { hour: "01" },
+    { hour: "02" },
+    { hour: "03" },
+    { hour: "04" },
+  ];
+  const minutesOptions = [
+    { minute: "05" },
+    { minute: "10" },
+    { minute: "15" },
+    { minute: "20" },
+    { minute: "25" },
+    { minute: "30" },
+    { minute: "45" },
+    { minute: "50" },
+    { minute: "55" },
+  ];
+
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
-
   const RNHapticFeedback = {
     trigger(
       type:
@@ -75,9 +93,6 @@ const AddGuestList = (props: any) => {
     setWaitingTime(null);
     setHours(null);
     setMinutes(null);
-  };
-  const handleClose = () => {
-    resetForm();
   };
   const handleAddGuest = async () => {
     hapticPress();
@@ -131,7 +146,7 @@ const AddGuestList = (props: any) => {
           setTodaysGuest((prev) =>
             uniqBy([...prev, response.data.guest], "_id")
           );
-          handleClose();
+          resetForm();
           navigation.goBack();
         }
       } catch (error: any) {
@@ -139,7 +154,6 @@ const AddGuestList = (props: any) => {
       }
     }
   };
-
   const handlePhoneChange = (text: string) => {
     // Allow only digits
     const cleaned = text.replace(/\D/g, "");
@@ -152,7 +166,6 @@ const AddGuestList = (props: any) => {
       setPhoneError("");
     }
   };
-
   const handleNumberOfGuestsSelect = (count: number) => {
     hapticPress();
 
@@ -162,25 +175,6 @@ const AddGuestList = (props: any) => {
       setWillingToShare(false);
     }
   };
-  const hourOptions = [
-    { hour: "00" },
-    { hour: "01" },
-    { hour: "02" },
-    { hour: "03" },
-    { hour: "04" },
-  ];
-  const minutesOptions = [
-    { minute: "05" },
-    { minute: "10" },
-    { minute: "15" },
-    { minute: "20" },
-    { minute: "25" },
-    { minute: "30" },
-    { minute: "45" },
-    { minute: "50" },
-    { minute: "55" },
-  ];
-
   return (
     <>
       <View style={styles.centeredView}>
@@ -194,7 +188,7 @@ const AddGuestList = (props: any) => {
                 style={styles.backIcon}
                 onPress={() => {
                   handleIconPress();
-                  handleClose();
+                  resetForm();
                 }}
               />
               <Text style={styles.modalTitle}>Add Guest</Text>
