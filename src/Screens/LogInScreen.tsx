@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ScrollView } from "react-native-gesture-handler";
 import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
 import MaterialIcons from "react-native-vector-icons/Feather";
-import { loginAPI, verifyAPI } from "../apis/auth";
+import { loginAPI } from "../apis/auth";
 import { AppContext } from "../Context/AppContext";
+import { getFontFamily } from "../utils/fontFamily";
 const LogInScreen = () => {
   const { loginUserAction, getCurrentUser } = useContext(AppContext);
   // TODO: REMOVE static username and password
@@ -90,9 +92,9 @@ const LogInScreen = () => {
 
   return (
     <>
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* <View style={styles.container}> */}
         <Text style={styles.header}>Welcome to MOG</Text>
-        <View style={styles.formContent}></View>
         <View style={styles.form}>
           <View style={styles.formGroup}>
             <Text style={styles.label}>Username</Text>
@@ -144,7 +146,8 @@ const LogInScreen = () => {
             <Text style={styles.addButtonText}>Submit</Text>
           </TouchableOpacity>
         </View>
-      </View>
+        {/* </View> */}
+      </ScrollView>
     </>
   );
 };
@@ -152,6 +155,7 @@ const LogInScreen = () => {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
+    height: "100%",
     paddingHorizontal: 26,
     flex: 1,
     justifyContent: "center",
@@ -160,10 +164,9 @@ const styles = StyleSheet.create({
   },
   header: {
     textAlign: "center",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
     fontSize: 26,
     marginBottom: 50,
-    fontWeight: "bold",
   },
   formContent: {
     width: "100%",
@@ -177,13 +180,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     width: "100%",
   },
-  label: { fontSize: 14, fontWeight: "500", marginBottom: 8 },
+  label: {
+    fontSize: 14,
+    marginBottom: 8,
+    fontFamily: getFontFamily("medium"),
+  },
   input: {
     borderWidth: 1,
     borderColor: "#000",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    fontFamily: getFontFamily("normal"),
     backgroundColor: "#F6F1E9",
   },
   passwordInput: {
@@ -202,10 +210,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontSize: 16,
     backgroundColor: "#F6F1E9",
+    fontFamily: getFontFamily("normal"),
   },
   buttonContainer: {
     flexDirection: "column",
-    paddingTop: 18,
+    paddingVertical: 18,
     width: "100%",
   },
   addButton: {
@@ -222,7 +231,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#FFF",
     fontSize: 20,
-    fontWeight: "600",
+    fontFamily: getFontFamily("semibold"),
   },
   errorText: {
     color: "red",

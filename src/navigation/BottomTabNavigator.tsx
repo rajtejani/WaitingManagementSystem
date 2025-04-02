@@ -47,6 +47,11 @@ const BottomTabNavigator = () => {
             tabBarInactiveTintColor: "black",
             tabBarActiveBackgroundColor: "#E73E1F",
             animation: "fade",
+
+            tabBarIconStyle: {
+              justifyContent: "center",
+              flex: 1,
+            },
           }}
         >
           <Tab.Screen

@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { getFontFamily } from "../utils/fontFamily";
 
 const Badge = ({
   count = 0,
@@ -35,7 +36,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
-    fontWeight: "bold",
+    fontFamily: getFontFamily("bold"),
   },
 });
 

@@ -138,14 +138,14 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: "center",
-    fontFamily: "Poppins",
+    fontFamily: "Roboto",
     fontSize: 26,
     marginBottom: 6,
     fontWeight: "bold",
   },
   subtext: {
     textAlign: "center",
-    fontFamily: "Poppins",
+    fontFamily: "Roboto",
     fontSize: 16,
     marginBottom: 30,
     fontWeight: "600",
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 14,
-    fontFamily: "Poppins",
+    fontFamily: "Roboto",
   },
   buttonContainer: {
     width: "100%",
@@ -200,13 +200,13 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: "bold",
-    fontFamily: "Poppins",
+    fontFamily: "Roboto",
   },
   btnText: {
     fontSize: 14,
     color: "#6D6969",
     fontWeight: "600",
-    fontFamily: "Poppins",
+    fontFamily: "Roboto",
   },
   continueButton: {
     marginTop: 50,
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
   },
   continueText: {
-    fontFamily: "Poppins",
+    fontFamily: "Roboto",
     fontSize: 18,
     fontWeight: "bold",
     color: "white",

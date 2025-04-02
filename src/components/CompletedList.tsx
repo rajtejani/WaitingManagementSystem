@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { StatusEnum, useAppContext, type Guest } from "../Context/AppContext";
+import { getFontFamily } from "../utils/fontFamily";
 
 const CompletedList = () => {
   const { todaysGuest } = useAppContext();
@@ -125,15 +126,14 @@ const styles = StyleSheet.create({
   },
   guestName: {
     fontSize: 16,
-    fontWeight: "600",
     marginBottom: 4,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("semibold"),
   },
   guestPhone: {
     fontSize: 14,
     color: "#666",
     marginBottom: 8,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("normal"),
   },
   detailsRow: {
     flexDirection: "row",
@@ -142,13 +142,13 @@ const styles = StyleSheet.create({
   },
   numberOfGuests: {
     fontSize: 13,
-    fontFamily: "Poppins",
-
+    fontFamily: getFontFamily("normal"),
     color: "#666",
   },
   timeText: {
     fontSize: 12,
     color: "#999",
+    fontFamily: getFontFamily("medium"),
   },
   statusContainer: {
     flexDirection: "row",
@@ -159,9 +159,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: "500",
     marginLeft: 3,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("medium"),
   },
   emptyStateContainer: {
     flex: 1,
@@ -170,7 +169,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 18,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("normal"),
     color: "#666",
     marginTop: 16,
     marginBottom: 8,
@@ -178,7 +177,7 @@ const styles = StyleSheet.create({
   emptyStateSubtext: {
     fontSize: 14,
     color: "#999",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("normal"),
   },
 });
 

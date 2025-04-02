@@ -7,11 +7,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import FontAwesome from "react-native-vector-icons/FontAwesome";
 import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { getFontFamily } from "../utils/fontFamily";
 const CustomDatePicker = ({
   onDateSelected,
 }: {
@@ -55,8 +56,8 @@ const CustomDatePicker = ({
   const handleChange = (event: any, date?: Date) => {
     setDatePickerVisibility(Platform.OS === "ios");
     if (date) {
-      setSelectedDate(date);
       onDateSelected(date);
+      setSelectedDate(date);
     }
   };
 
@@ -90,13 +91,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: "#000",
-    borderRadius: 4,
+    borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 15,
     backgroundColor: "#fff",
   },
   inputText: {
     fontSize: 16,
+    fontFamily: getFontFamily("medium"),
     color: "#888",
   },
 });

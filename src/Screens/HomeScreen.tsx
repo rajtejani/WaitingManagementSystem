@@ -2,6 +2,10 @@ import { useNavigation } from "@react-navigation/native";
 import { capitalize } from "lodash";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import NativeHapticFeedback, {
+  HapticFeedbackTypes,
+  HapticOptions,
+} from "react-native-haptic-feedback";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { StatusEnum, useAppContext } from "../Context/AppContext";
@@ -9,10 +13,8 @@ import Badge from "../components/Badge";
 import CompletedList from "../components/CompletedList";
 import WaitingList from "../components/WaitingList";
 import { UserRolesTypes } from "../utils/common.utils";
-import NativeHapticFeedback, {
-  HapticFeedbackTypes,
-  HapticOptions,
-} from "react-native-haptic-feedback";
+import { getFontFamily } from "../utils/fontFamily";
+
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
     "upcoming"
@@ -133,8 +135,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#F6F1E9",
-    zIndex: 100,
-    position: "relative",
   },
   container: {
     flex: 1,
@@ -149,8 +149,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: "bold",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
 
   waitingTimeContainer: {
@@ -163,13 +162,11 @@ const styles = StyleSheet.create({
   },
   waitingTimeLabel: {
     fontSize: 16,
-    fontWeight: "500",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("medium"),
   },
   waitingTimeValue: {
     fontSize: 16,
-    fontWeight: 700,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   tabContainer: {
     flexDirection: "row",
@@ -195,11 +192,12 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E53935",
   },
   tabText: {
+    fontFamily: getFontFamily("normal"),
     fontSize: 16,
     color: "#666666",
   },
   activeTabText: {
-    fontWeight: "600",
+    fontFamily: getFontFamily("medium"),
     color: "#000000",
   },
   listContainer: {

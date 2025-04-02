@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getFontFamily } from "../utils/fontFamily";
 
 interface Manager {
   id: number;
@@ -140,14 +141,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 40,
-    fontWeight: 700,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("semibold"),
     marginBottom: 24,
   },
   formGroup: {
     marginBottom: 20,
   },
-  label: { fontSize: 14, fontWeight: "500", marginBottom: 8 },
+  label: {
+    fontSize: 14,
+    marginBottom: 8,
+    fontFamily: getFontFamily("medium"),
+  },
   input: {
     borderWidth: 1,
     borderColor: "#000",
@@ -155,6 +159,7 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: "#F6F1E9",
+    fontFamily: getFontFamily("normal"),
   },
   buttonContainer: {
     flexDirection: "column",
@@ -171,7 +176,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#FFF",
     fontSize: 20,
-    fontWeight: "600",
+    fontFamily: getFontFamily("semibold"),
   },
   managerItem: {
     flexDirection: "row",
@@ -183,6 +188,7 @@ const styles = StyleSheet.create({
   managerName: {
     flex: 1,
     fontSize: 16,
+    fontFamily: getFontFamily("normal"),
   },
   editButton: {
     backgroundColor: "#6A96F2",
@@ -192,7 +198,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: "#fff",
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: getFontFamily("semibold"),
   },
   deleteButton: {
     backgroundColor: "#E73E1F",
@@ -202,7 +208,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: "#fff",
-    fontWeight: "600",
+    fontFamily: getFontFamily("semibold"),
     fontSize: 14,
   },
   modalContainer: {

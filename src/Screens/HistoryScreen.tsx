@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
-import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
 import type { Guest } from "../Context/AppContext";
+import { getFontFamily } from "../utils/fontFamily";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -27,9 +28,18 @@ const HistoryScreen = () => {
       console.error("Error fetching guest history:", error);
     }
   };
-
+  useEffect(() => {
+    try {
+      setIsLoading(true);
+      handleDateSelected(selectedDate);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      console.error("Error fetching guest history:", error);
+    }
+  }, []);
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <View style={styles.container}>
         <Text style={styles.title}>History</Text>
         <CustomDatePicker onDateSelected={handleDateSelected} />
@@ -87,7 +97,7 @@ const HistoryScreen = () => {
           </>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -98,12 +108,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    padding: 16,
+    // padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   title: {
     fontSize: 40,
-    fontWeight: 700,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("semibold"),
   },
   datePickerButton: {
     flexDirection: "row",
@@ -125,8 +136,8 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#F8F8F8",
-    borderRadius: 4,
+    backgroundColor: "#fff",
+    borderRadius: 8,
     padding: 16,
     marginHorizontal: 4,
     alignItems: "center",
@@ -135,18 +146,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginBottom: 8,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("medium"),
   },
   statValue: {
     fontSize: 24,
-    fontWeight: "bold",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
     marginBottom: 12,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("semibold"),
   },
   guestListContainer: {
     flex: 1,
@@ -161,17 +170,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     marginVertical: 4,
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 8,
   },
   guestName: {
     fontSize: 16,
-    fontWeight: "500",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("medium"),
   },
   guestPhone: {
     fontSize: 14,
     color: "#666",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("normal"),
+
     marginTop: 4,
   },
   numberOfGuests: {
@@ -179,8 +188,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#E0E0E0",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    fontFamily: "Poppins",
-    borderRadius: 4,
+    fontFamily: getFontFamily("normal"),
+    borderRadius: 8,
   },
   emptyStateContainer: {
     flex: 1,
@@ -191,7 +200,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
     marginTop: 16,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("normal"),
   },
 });
 

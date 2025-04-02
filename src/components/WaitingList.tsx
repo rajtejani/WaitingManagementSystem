@@ -22,6 +22,7 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { Guest, StatusEnum, useAppContext } from "../Context/AppContext";
 import { updateGuestStatusAPI } from "../apis/guest";
 import { UserRolesTypes } from "../utils/common.utils";
+import { getFontFamily } from "../utils/fontFamily";
 
 const WaitingList = () => {
   const { role, todaysGuest, loaders, setTodaysGuest } = useAppContext();
@@ -125,17 +126,17 @@ const WaitingList = () => {
   };
 
   const handleCancel = (id: string) => {
-    hapticPress();
-
     Alert.alert(
       "Cancel Waiting",
       "Are you sure you want to cancel this guest?",
       [
-        { text: "No", style: "cancel" },
+        { text: "No", style: "cancel", onPress: () => hapticPress() },
         {
           text: "Yes",
           style: "destructive",
-          onPress: () => handleStatusChange(id, StatusEnum.Cancelled),
+          onPress: () => {
+            handleStatusChange(id, StatusEnum.Cancelled), hapticPress();
+          },
         },
       ]
     );
@@ -184,7 +185,7 @@ const WaitingList = () => {
           <View style={styles.guestContainer}>
             <View style={styles.guestInfo}>
               <View style={styles.guestNameContainer}>
-                <View>
+                <View style={styles.guestNameContent}>
                   <View>
                     <Text style={[styles.guestName]}>{item.name}</Text>
                   </View>
@@ -210,7 +211,6 @@ const WaitingList = () => {
                         style={[styles.icon]}
                       />
                       <Text style={[styles.timeText]}>
-                        {" "}
                         {format(parseISO(item.entryTime), "hh:mm a")}
                       </Text>
                     </View>
@@ -398,9 +398,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  icon: { color: "#666", fontWeight: "600" },
-  callIcon: { fontWeight: "bold" },
-  mainIcon: { color: "#000" },
+  icon: {
+    color: "#666",
+    fontWeight: "600",
+  },
+  callIcon: {
+    fontWeight: "bold",
+  },
+  mainIcon: {
+    color: "#000",
+  },
   listContent: {
     paddingBottom: 20,
   },
@@ -421,8 +428,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   numberCircle: {
-    marginRight: 25,
-    justifyContent: "center",
+    marginRight: 18,
     alignItems: "center",
   },
   statusContainer: {
@@ -461,9 +467,8 @@ const styles = StyleSheet.create({
 
   statusText: {
     fontSize: 12,
-    fontWeight: "bold",
     marginLeft: 3,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   completeButton: (bgColor: string) => ({
     backgroundColor: bgColor,
@@ -479,15 +484,19 @@ const styles = StyleSheet.create({
   completeText: {
     color: "#fff",
     fontSize: 14,
-    fontWeight: "bold",
     textAlign: "center",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   numberText: {
     color: "#000",
     fontSize: 40,
-    fontFamily: "Poppins",
-    fontWeight: "bold",
+    fontFamily: getFontFamily("bold"),
+  },
+  sharingText: {
+    fontSize: 10,
+    fontFamily: getFontFamily("medium"),
+    color: "lightGray",
+    textAlign: "center",
   },
   guestInfo: {
     flexDirection: "column",
@@ -499,22 +508,23 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  guestNameContent: {
+    flex: 1,
+  },
   guestName: {
     fontSize: 18,
     marginBottom: 2,
     marginLeft: 4,
-    fontFamily: "Poppins",
-    fontWeight: "bold",
+    fontFamily: getFontFamily("bold"),
   },
   inlineGuestName: {
     color: "#FFF",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("normal"),
   },
   guestPhone: {
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("semibold"),
     fontSize: 14,
     color: "#666",
-    fontWeight: 600,
     marginBottom: 8,
     marginLeft: 4,
   },
@@ -538,13 +548,12 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 14,
     color: "#666",
-    fontWeight: "700",
     marginLeft: 2,
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   inLineGuestText: {
     color: "#FFF",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("normal"),
   },
   actions: {
     flex: 1,
@@ -569,9 +578,8 @@ const styles = StyleSheet.create({
   inLineText: {
     color: "#FFF",
     fontSize: 14,
-    fontWeight: "bold",
     textAlign: "center",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   seatedButton: {
     backgroundColor: "grey",
@@ -583,9 +591,8 @@ const styles = StyleSheet.create({
   seatedText: {
     color: "#FFF",
     fontSize: 14,
-    fontWeight: "bold",
     textAlign: "center",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   cancelButton: {
     backgroundColor: "#C70039",
@@ -598,8 +605,7 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 12,
     textAlign: "center",
-    fontFamily: "Poppins",
-    fontWeight: "bold",
+    fontFamily: getFontFamily("bold"),
   },
   callButton: {
     paddingVertical: 8,
@@ -615,8 +621,7 @@ const styles = StyleSheet.create({
     color: "#FFF",
     marginLeft: 3,
     fontSize: 14,
-    fontWeight: "bold",
-    fontFamily: "Poppins",
+    fontFamily: getFontFamily("bold"),
   },
   emptyStateContainer: {
     flex: 1,
@@ -632,10 +637,6 @@ const styles = StyleSheet.create({
   emptyStateSubtext: {
     fontSize: 14,
     color: "#999",
-  },
-  sharingText: {
-    fontSize: 10,
-    color: "lightGray",
   },
 });
 

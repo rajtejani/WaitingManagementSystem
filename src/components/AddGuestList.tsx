@@ -22,6 +22,7 @@ import SelectDropdown from "react-native-select-dropdown";
 import Icon from "react-native-vector-icons/Feather";
 import { AppContext, type GuestInput } from "../Context/AppContext";
 import { newGuestEntryAPI } from "../apis/guest";
+import { getFontFamily } from "../utils/fontFamily";
 
 const AddGuestList = (props: any) => {
   const { setTodaysGuest } = useContext(AppContext);
@@ -242,7 +243,7 @@ const AddGuestList = (props: any) => {
                       justifyContent: "space-between",
                     }}
                   >
-                    <View style={{ flex: 1, marginRight: 20 }}>
+                    <View style={{ flex: 1, marginRight: 10 }}>
                       <SelectDropdown
                         data={hourOptions}
                         onSelect={(selectedItem, index) => {
@@ -465,8 +466,8 @@ const styles = StyleSheet.create({
   modalTitle: {
     flex: 1,
     fontSize: 20,
-    fontWeight: "bold",
     textAlign: "center",
+    fontFamily: getFontFamily("bold"),
     paddingRight: 24,
     marginRight: 20,
   },
@@ -479,7 +480,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: "500",
+    fontFamily: getFontFamily("medium"),
     marginBottom: 8,
   },
   input: {
@@ -488,6 +489,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    backgroundColor: "#FFF",
   },
   inputError: {
     borderColor: "red",
@@ -505,12 +507,12 @@ const styles = StyleSheet.create({
   },
   numberOfGuestsButton: {
     flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    padding: 12,
     borderWidth: 1,
     borderColor: "#E73E1F",
     borderRadius: 8,
     alignItems: "center",
+    backgroundColor: "#FFF",
   },
   numberOfGuestsButtonActive: {
     backgroundColor: "#E53935",
@@ -518,11 +520,13 @@ const styles = StyleSheet.create({
   },
   numberOfGuestsButtonText: {
     fontSize: 16,
+    fontFamily: getFontFamily("normal"),
     color: "#E73E1F",
   },
   numberOfGuestsButtonTextActive: {
     color: "#FFF",
     fontWeight: "600",
+    fontFamily: getFontFamily("semibold"),
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -538,6 +542,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#FFF",
   },
   checkboxActive: {
     backgroundColor: "#E73E1F",
@@ -549,6 +554,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "column",
     paddingTop: 18,
+    paddingBottom: 50,
   },
   addButton: {
     backgroundColor: "#E73E1F",
@@ -562,13 +568,11 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#FFF",
     fontSize: 20,
-    fontWeight: "600",
+    fontFamily: getFontFamily("semibold"),
     marginLeft: 10,
   },
 
   dropdownButtonStyle: {
-    // width: 180,
-    // height: 48,
     padding: 12,
     borderColor: "#000",
     borderWidth: 1,
@@ -577,10 +581,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 12,
+    backgroundColor: "#FFF",
   },
   dropdownButtonTxtStyle: {
     flex: 1,
     fontSize: 16,
+    fontFamily: getFontFamily("normal"),
     color: "#151E26",
   },
   dropdownButtonArrowStyle: {
@@ -591,7 +597,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   dropdownMenuStyle: {
-    backgroundColor: "#F6F1E9",
+    backgroundColor: "#fff",
     borderRadius: 8,
   },
   dropdownItemStyle: {
@@ -605,7 +611,7 @@ const styles = StyleSheet.create({
   dropdownItemTxtStyle: {
     flex: 1,
     fontSize: 18,
-    fontWeight: "500",
+    fontFamily: getFontFamily("medium"),
     color: "#151E26",
   },
   dropdownItemIconStyle: {
