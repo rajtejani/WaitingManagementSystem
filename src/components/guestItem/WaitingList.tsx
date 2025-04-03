@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 18,
   },
   guestDetails: {
     flex: 1,

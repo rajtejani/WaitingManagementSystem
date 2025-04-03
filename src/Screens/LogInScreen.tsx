@@ -94,57 +94,59 @@ const LogInScreen = () => {
   return (
     <>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>Welcome to MOG</Text>
-        <View style={styles.form}>
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Username</Text>
-            <TextInput
-              style={styles.input}
-              value={name}
-              placeholder="Enter name"
-              placeholderTextColor={"#222222"}
-              onChangeText={(text) => setName(text)}
-            />
-            {nameError ? (
-              <Text style={styles.errorText}>{nameError}</Text>
-            ) : null}
-          </View>
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordInput}>
+        <View style={styles.content}>
+          <Text style={styles.header}>Welcome to MOG</Text>
+          <View style={styles.form}>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Username</Text>
               <TextInput
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-                style={styles.pswInput}
-                placeholder="Enter password"
+                style={styles.input}
+                value={name}
+                placeholder="Enter name"
                 placeholderTextColor={"#222222"}
+                onChangeText={(text) => setName(text)}
               />
-              <MaterialIcons
-                name={showPassword ? "eye" : "eye-off"}
-                size={20}
-                onPress={toggleShowPassword}
-              />
+              {nameError ? (
+                <Text style={styles.errorText}>{nameError}</Text>
+              ) : null}
             </View>
-            {passwordError ? (
-              <Text style={styles.errorText}>{passwordError}</Text>
-            ) : null}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordInput}>
+                <TextInput
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  style={styles.pswInput}
+                  placeholder="Enter password"
+                  placeholderTextColor={"#222222"}
+                />
+                <MaterialIcons
+                  name={showPassword ? "eye" : "eye-off"}
+                  size={20}
+                  onPress={toggleShowPassword}
+                />
+              </View>
+              {passwordError ? (
+                <Text style={styles.errorText}>{passwordError}</Text>
+              ) : null}
+            </View>
           </View>
-        </View>
-        {loadingError && (
-          <Text style={{ textAlign: "center", color: "#F00" }}>
-            {loadingError}
-          </Text>
-        )}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            disabled={isLoading}
-            style={styles.addButton}
-            onPress={handleAddGuest}
-          >
-            {isLoading && <ActivityIndicator color={"#FFF"} size={20} />}
-            <Text style={styles.addButtonText}>Submit</Text>
-          </TouchableOpacity>
+          {loadingError && (
+            <Text style={{ textAlign: "center", color: "#F00" }}>
+              {loadingError}
+            </Text>
+          )}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              disabled={isLoading}
+              style={styles.addButton}
+              onPress={handleAddGuest}
+            >
+              {isLoading && <ActivityIndicator color={"#FFF"} size={20} />}
+              <Text style={styles.addButtonText}>Submit</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </>
@@ -160,6 +162,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F6F1E9",
+  },
+  content: {
+    width: "100%",
+    maxWidth: 800,
   },
   header: {
     textAlign: "center",
@@ -191,13 +197,13 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     fontFamily: getFontFamily("normal"),
-    backgroundColor: "#F6F1E9",
+    backgroundColor: "#fff",
   },
   passwordInput: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F6F1E9",
+    backgroundColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -208,7 +214,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 8,
     fontSize: 16,
-    backgroundColor: "#F6F1E9",
+    backgroundColor: "#fff",
     fontFamily: getFontFamily("normal"),
   },
   buttonContainer: {

@@ -68,7 +68,6 @@ const CompletedList = () => {
             )}
           </View>
         </View>
-
         <View
           style={[
             styles.statusContainer,
@@ -114,14 +113,14 @@ const styles = StyleSheet.create({
   },
   guestItem: {
     boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
-
     flexDirection: "row",
     padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 8,
-    marginBottom: 12,
+    marginBottom: 18,
     justifyContent: "space-between",
     alignItems: "center",
+    flexBasis: 3,
   },
   guestInfo: {
     flex: 1,
@@ -141,12 +140,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingRight: 16,
   },
   numberOfGuests: {
+    width: "100%",
     fontSize: 13,
     fontFamily: getFontFamily("normal"),
     color: "#666",
   },
+
   timeText: {
     fontSize: 12,
     color: "#999",

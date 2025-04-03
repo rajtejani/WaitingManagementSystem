@@ -440,9 +440,12 @@ const styles = StyleSheet.create({
   centeredView: {
     backgroundColor: "#F6F1E9",
     width: "100%",
+    alignItems: "center",
     height: "100%",
   },
   modalOverlay: {
+    maxWidth: 800,
+    width: "100%",
     paddingTop: 40,
     justifyContent: "center",
     alignItems: "center",
