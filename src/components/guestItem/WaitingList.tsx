@@ -19,10 +19,11 @@ import NativeHapticFeedback, {
 } from "react-native-haptic-feedback";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { Guest, StatusEnum, useAppContext } from "../Context/AppContext";
-import { updateGuestStatusAPI } from "../apis/guest";
-import { UserRolesTypes } from "../utils/common.utils";
-import { getFontFamily } from "../constants/fontFamily";
+import { useAppContext } from "../../context/AppContext";
+import { updateGuestStatusAPI } from "../../apis/guest";
+import { StatusEnum, UserRolesTypes } from "../../utils/enums";
+import { getFontFamily } from "../../constants/fontFamily";
+import { Guest } from "../../types/UserInterface";
 
 const WaitingList = () => {
   const [loadingIds, setLoadingIds] = useState<string[]>([]);

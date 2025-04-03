@@ -1,6 +1,7 @@
 import Toast from "react-native-toast-message";
 import apiInstance from "../config/axios";
-import type { GuestInput, StatusEnum } from "../Context/AppContext";
+import { StatusEnum } from "../utils/enums";
+import { GuestInput } from "../types/UserInterface";
 
 export function getTodaysGuestAPI() {
   return apiInstance

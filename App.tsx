@@ -3,10 +3,10 @@ import { createStackNavigator } from "@react-navigation/stack";
 import React, { useContext } from "react";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AppContext, AppProvider } from "./src/Context/AppContext";
+import { AppContext, AppProvider } from "./src/context/AppContext";
 import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
-import LogInScreen from "./src/Screens/LogInScreen";
-import AddGuestList from "./src/components/AddGuestList";
+import LogInScreen from "./src/screens/LogInScreen";
+import AddGuestScreen from "./src/screens/AddGuestScreen";
 import Toast from "react-native-toast-message";
 const Stack = createStackNavigator();
 
@@ -35,7 +35,7 @@ const Routes = () => {
         ) : (
           <>
             <Stack.Screen name="Home" component={BottomTabNavigator} />
-            <Stack.Screen name="Guest" component={AddGuestList} />
+            <Stack.Screen name="Guest" component={AddGuestScreen} />
           </>
         )}
       </Stack.Navigator>

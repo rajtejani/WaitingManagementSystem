@@ -5,10 +5,10 @@ import NativeHapticFeedback, {
   HapticOptions,
 } from "react-native-haptic-feedback";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useAppContext } from "../Context/AppContext";
-import HistoryScreen from "../Screens/HistoryScreen";
-import HomeScreen from "../Screens/HomeScreen";
-import { UserRolesTypes } from "../utils/common.utils";
+import { useAppContext } from "../context/AppContext";
+import HistoryScreen from "../screens/HistoryScreen";
+import HomeScreen from "../screens/HomeScreen";
+import { UserRolesTypes } from "../utils/enums";
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {

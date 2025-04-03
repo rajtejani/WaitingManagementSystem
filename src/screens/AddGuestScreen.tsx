@@ -20,11 +20,12 @@ import NativeHapticFeedback, {
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import SelectDropdown from "react-native-select-dropdown";
 import Icon from "react-native-vector-icons/Feather";
-import { AppContext, type GuestInput } from "../Context/AppContext";
+import { AppContext } from "../context/AppContext";
 import { newGuestEntryAPI } from "../apis/guest";
 import { getFontFamily } from "../constants/fontFamily";
+import { GuestInput } from "../types/UserInterface";
 
-const AddGuestList = (props: any) => {
+const AddGuestScreen = (props: any) => {
   const { setTodaysGuest } = useContext(AppContext);
   const [userName, setUserName] = useState("");
   const [nameError, setNameError] = useState("");
@@ -614,4 +615,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddGuestList;
+export default AddGuestScreen;

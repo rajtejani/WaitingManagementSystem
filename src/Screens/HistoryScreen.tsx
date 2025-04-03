@@ -4,8 +4,8 @@ import { FlatList } from "react-native-gesture-handler";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
-import type { Guest } from "../Context/AppContext";
 import { getFontFamily } from "../constants/fontFamily";
+import { Guest } from "../types/UserInterface";
 
 const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());

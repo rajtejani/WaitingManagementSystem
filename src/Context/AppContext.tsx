@@ -13,36 +13,10 @@ import { ActivityIndicator, Image, View } from "react-native";
 import { verifyAPI } from "../apis/auth";
 import { getTodaysGuestAPI } from "../apis/guest";
 import apiInstance from "../config/axios";
-import pusher from "../services/pusherService";
+import pusher from "../services/pusher.service";
+import { Guest, User } from "../types/UserInterface";
 const Sound = require("react-native-sound");
 
-type User = {
-  name: string;
-  role: string;
-  username: string;
-};
-
-export interface GuestInput {
-  name: string;
-  phoneNumber: string;
-  numberOfGuests: number;
-  waitingTime: string;
-  preferSharing?: boolean;
-}
-
-export enum StatusEnum {
-  "Waiting" = "waiting",
-  "TableReady" = "Table Ready",
-  "InLine" = "In Line",
-  "Seated" = "Seated",
-  "Cancelled" = "Cancelled",
-}
-export interface Guest extends GuestInput {
-  _id: string;
-  status: StatusEnum;
-  entryTime: string;
-  waitingTime: string;
-}
 interface AppContextType {
   user?: User;
   token?: string;

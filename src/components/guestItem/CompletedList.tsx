@@ -2,8 +2,10 @@ import { format, parseISO } from "date-fns";
 import React, { useMemo } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { StatusEnum, useAppContext, type Guest } from "../Context/AppContext";
-import { getFontFamily } from "../constants/fontFamily";
+import { useAppContext } from "../../context/AppContext";
+import { getFontFamily } from "../../constants/fontFamily";
+import { StatusEnum } from "../../utils/enums";
+import { Guest } from "../../types/UserInterface";
 
 const CompletedList = () => {
   const { todaysGuest } = useAppContext();

@@ -8,11 +8,11 @@ import NativeHapticFeedback, {
 } from "react-native-haptic-feedback";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { StatusEnum, useAppContext } from "../Context/AppContext";
+import { useAppContext } from "../context/AppContext";
 import Badge from "../components/Badge";
-import CompletedList from "../components/CompletedList";
-import WaitingList from "../components/WaitingList";
-import { UserRolesTypes } from "../utils/common.utils";
+import CompletedList from "../components/guestItem/CompletedList";
+import WaitingList from "../components/guestItem/WaitingList";
+import { StatusEnum, UserRolesTypes } from "../utils/enums";
 import { getFontFamily } from "../constants/fontFamily";
 
 const HomeScreen = () => {
@@ -149,7 +149,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: getFontFamily("bold"),
   },
-
   waitingTimeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",

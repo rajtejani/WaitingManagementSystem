@@ -15,7 +15,7 @@ import NativeHapticFeedback, {
 } from "react-native-haptic-feedback";
 import MaterialIcons from "react-native-vector-icons/Feather";
 import { loginAPI } from "../apis/auth";
-import { AppContext } from "../Context/AppContext";
+import { AppContext } from "../context/AppContext";
 import { getFontFamily } from "../constants/fontFamily";
 const LogInScreen = () => {
   // TODO: REMOVE static username and password
