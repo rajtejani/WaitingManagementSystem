@@ -1,15 +1,19 @@
 import { format, parseISO } from "date-fns";
 import React, { useMemo } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useAppContext } from "../../context/AppContext";
 import { getFontFamily } from "../../constants/fontFamily";
-import { StatusEnum } from "../../utils/enums";
+import { useAppContext } from "../../context/AppContext";
 import { Guest } from "../../types/UserInterface";
+import { StatusEnum } from "../../utils/enums";
 
 const CompletedList = () => {
   const { todaysGuest } = useAppContext();
+  // Get the device width
+  const deviceWidth = Dimensions.get("window").width;
 
+  // Determine if the device is a tablet (1000px or greater width)
+  const isTablet = deviceWidth <= 1000;
   const sortedGuests = useMemo(() => {
     let guestList = todaysGuest;
     guestList = guestList.filter((item) =>
@@ -51,7 +55,6 @@ const CompletedList = () => {
   const renderItem = ({ item }: { item: Guest }) => {
     const statusColor = getStatusColor(item.status);
     const statusIcon = getStatusIcon(item.status);
-
     return (
       <View style={styles.guestItem}>
         <View style={styles.guestInfo}>
@@ -88,6 +91,7 @@ const CompletedList = () => {
         <FlatList
           data={sortedGuests}
           keyExtractor={(item) => item._id}
+          horizontal={false}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
         />
@@ -106,24 +110,25 @@ const CompletedList = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1,
   },
   listContent: {
-    paddingBottom: 20,
+    gap: 10,
   },
+
   guestItem: {
     boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
     flexDirection: "row",
     padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 8,
-    marginBottom: 18,
     justifyContent: "space-between",
     alignItems: "center",
-    flexBasis: 3,
   },
   guestInfo: {
     flex: 1,
+    width: "100%",
+    // maxWidth: 250,
   },
   guestName: {
     fontSize: 16,

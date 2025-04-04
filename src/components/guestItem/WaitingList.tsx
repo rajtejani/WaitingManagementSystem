@@ -5,9 +5,10 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Dimensions,
   Easing,
-  FlatList,
   Linking,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -19,17 +20,23 @@ import NativeHapticFeedback, {
 } from "react-native-haptic-feedback";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useAppContext } from "../../context/AppContext";
 import { updateGuestStatusAPI } from "../../apis/guest";
-import { StatusEnum, UserRolesTypes } from "../../utils/enums";
 import { getFontFamily } from "../../constants/fontFamily";
+import { useAppContext } from "../../context/AppContext";
 import { Guest } from "../../types/UserInterface";
+import { StatusEnum, UserRolesTypes } from "../../utils/enums";
 
 const WaitingList = () => {
   const [loadingIds, setLoadingIds] = useState<string[]>([]);
   const { role, todaysGuest, loaders, setTodaysGuest } = useAppContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
+  // Get the device width
+  const deviceWidth = Dimensions.get("window").width;
+
+  // Determine if the device is a tablet (1000px or greater width)
+  const isTablet = deviceWidth <= 1000;
+
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
@@ -168,12 +175,13 @@ const WaitingList = () => {
     };
     pulse();
   }, []);
+
   const renderItem = ({ item }: { item: Guest }) => {
     const statusColor = getStatusColor(item.status);
 
     return (
       <View style={[styles.guestItem]}>
-        <View style={styles.guestDetails}>
+        <View style={isTablet ? styles.guestDetails : styles.guestDetailsSmall}>
           <View style={styles.guestContainer}>
             <View style={styles.guestInfo}>
               <View style={styles.guestNameContainer}>
@@ -236,7 +244,7 @@ const WaitingList = () => {
                         opacity: opacityAnim,
                       },
                     ]}
-                  ></Animated.View>
+                  />
                   <View>
                     <Text style={[styles.statusText, { color: statusColor }]}>
                       {capitalize(item.status.toString())}
@@ -363,14 +371,23 @@ const WaitingList = () => {
       {loaders.isTodaysGuestLoading ? (
         <ActivityIndicator size={30} color="#E73E1F" />
       ) : (
-        <>
+        <View style={styles.itemContent}>
           {upcomingGuests?.length > 0 ? (
-            <FlatList
-              data={upcomingGuests}
-              keyExtractor={(item) => item._id}
-              renderItem={renderItem}
-              contentContainerStyle={styles.listContent}
-            />
+            // <FlatList
+            //   data={upcomingGuests}
+            //   keyExtractor={(item) => item._id}
+            //   renderItem={renderItem}
+            //   contentContainerStyle={
+            //     isTablet ? styles.listContent : styles.listContentSmall
+            //   }
+            //   />
+            <ScrollView
+              style={isTablet ? styles.listContent : styles.listContentSmall}
+            >
+              {upcomingGuests.map((item, index) => (
+                <View key={item._id}>{renderItem({ item })}</View>
+              ))}
+            </ScrollView>
           ) : (
             <View style={styles.emptyStateContainer}>
               <MaterialIcons name="today" size={64} color="#DDD" />
@@ -380,7 +397,7 @@ const WaitingList = () => {
               </Text>
             </View>
           )}
-        </>
+        </View>
       )}
     </View>
   );
@@ -400,8 +417,12 @@ const styles = StyleSheet.create({
   mainIcon: {
     color: "#000",
   },
-  listContent: {
-    paddingBottom: 20,
+  itemContent: {
+    width: "100%",
+  },
+  listContent: {},
+  listContentSmall: {
+    flexWrap: "wrap",
   },
   guestItem: {
     flexDirection: "row",
@@ -409,12 +430,14 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 8,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   guestDetails: {
     flex: 1,
     flexDirection: "column",
+    width: "100%",
   },
+
   guestContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -524,7 +547,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 4,
-    width: "100%",
+    // width: "100%",
   },
   timeRow: {
     flexDirection: "row",
@@ -548,7 +571,7 @@ const styles = StyleSheet.create({
     fontFamily: getFontFamily("normal"),
   },
   actions: {
-    flex: 1,
+    // flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 14,
