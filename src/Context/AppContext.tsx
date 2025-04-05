@@ -10,6 +10,7 @@ import React, {
   type SetStateAction,
 } from "react";
 import { ActivityIndicator, Image, View } from "react-native";
+import Toast from "react-native-toast-message";
 import { verifyAPI } from "../apis/auth";
 import { getTodaysGuestAPI } from "../apis/guest";
 import apiInstance from "../config/axios";
@@ -38,6 +39,7 @@ interface AppContextType {
   getCurrentUser: () => void;
   setTodaysGuest: Dispatch<SetStateAction<Guest[]>>;
   setGuestHistory: Dispatch<SetStateAction<Guest[]>>;
+  error?: string;
 }
 
 const statusChangeSound = new Sound(
@@ -85,6 +87,7 @@ export const AppProvider: React.FC<{
   });
   const [accessToken, setToken] = useState("");
   const [user, setUser] = useState<User>();
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const getCurrentUser = async () => {
     try {
@@ -98,12 +101,27 @@ export const AppProvider: React.FC<{
       }
 
       apiInstance.defaults.headers["auth_token"] = token;
-      const response = await verifyAPI(token);
+      const response = await verifyAPI(token)
+        .then((response) => {
+          Toast.show({
+            type: "success",
+            text1: "Verification successful",
+          });
+          return response;
+        })
+        .catch((error) => {
+          Toast.show({
+            type: "error",
+            text1: error.message,
+          });
+          throw error;
+        });
 
       setToken(token);
       setUser(response.data.user);
       setIsLoading(false);
     } catch (error) {
+      setError((error as Error).message);
       setIsLoading(false);
     }
   };
@@ -117,14 +135,24 @@ export const AppProvider: React.FC<{
     try {
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
 
-      const response = await getTodaysGuestAPI();
+      const response = await getTodaysGuestAPI()
+        .then((response) => {
+          return response;
+        })
+        .catch((error) => {
+          Toast.show({
+            type: "error",
+            text1: error.message,
+          });
+          throw error;
+        });
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
 
       if (response.status === 200) {
         setTodaysGuest(response.data.guests);
       }
     } catch (error) {
-      console.log(" >>> error ", error);
+      setError((error as Error).message);
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
     }
   };
@@ -132,13 +160,31 @@ export const AppProvider: React.FC<{
   const getTodaysGuest = async () => {
     try {
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
-      const response = await getTodaysGuestAPI();
+      const response = await getTodaysGuestAPI()
+        .then((response) => {
+          return response;
+        })
+        .catch((error) => {
+          Toast.show({
+            type: "error",
+            text1: error.message,
+          });
+          throw error;
+        });
+      // const guestsWithIndex = response.data.guests.map((guest, index) => ({
+      //   ...guest,
+      //   tokenIndex: index + 1,
+      // }));
+      // console.log(
+      //   " getTodaysGuest Index Number of guest=====>",
+      //   guestsWithIndex
+      // );
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
       if (response.status === 200) {
         setTodaysGuest(response.data.guests);
       }
     } catch (error) {
-      console.log(" >>> error ", error);
+      setError((error as Error).message);
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
     }
   };

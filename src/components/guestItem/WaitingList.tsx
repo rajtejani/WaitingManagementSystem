@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   Easing,
+  FlatList,
   Linking,
   ScrollView,
   StyleSheet,
@@ -18,6 +19,7 @@ import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
+import Toast from "react-native-toast-message";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { updateGuestStatusAPI } from "../../apis/guest";
@@ -25,22 +27,39 @@ import { getFontFamily } from "../../constants/fontFamily";
 import { useAppContext } from "../../context/AppContext";
 import { Guest } from "../../types/UserInterface";
 import { StatusEnum, UserRolesTypes } from "../../utils/enums";
-
-const WaitingList = () => {
+interface WaitingListProps {
+  searchQuery: string;
+}
+const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
   const [loadingIds, setLoadingIds] = useState<string[]>([]);
+  const [error, setError] = useState<string | undefined>(undefined);
+
   const { role, todaysGuest, loaders, setTodaysGuest } = useAppContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
+  const upcomingGuestsCount = todaysGuest?.filter(
+    (guest) => ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
+  );
+
+  const guestsWithIndex = upcomingGuestsCount.map((guest, index) => ({
+    ...guest,
+    tokenIndex: index + 1,
+  }));
+
   // Get the device width
   const deviceWidth = Dimensions.get("window").width;
+  const isTablet = deviceWidth >= 1000;
 
-  // Determine if the device is a tablet (1000px or greater width)
-  const isTablet = deviceWidth <= 1000;
-
+  const filteredGuests = guestsWithIndex.sort((a, b) => {
+    const isA = a.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const isB = b.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return isA === isB ? 0 : isA ? -1 : 1;
+  });
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
+
   let upcomingGuests = cloneDeep(
     todaysGuest?.filter(
       (guest) =>
@@ -81,7 +100,21 @@ const WaitingList = () => {
   const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
     hapticPress();
     try {
-      const response = await updateGuestStatusAPI(id, newStatus);
+      const response = await updateGuestStatusAPI(id, newStatus)
+        .then((response) => {
+          Toast.show({
+            type: "success",
+            text1: "Guest status updated successfully",
+          });
+          return response;
+        })
+        .catch((error) => {
+          Toast.show({
+            type: "error",
+            text1: error.message,
+          });
+          throw error;
+        });
       // Update the AppContext state on success
       setTodaysGuest((prevGuests) => {
         return prevGuests.map((guest) => {
@@ -92,7 +125,7 @@ const WaitingList = () => {
         });
       });
     } catch (error) {
-      console.error(error);
+      setError((error as Error).message);
     }
     try {
       setLoadingIds((prev) => {
@@ -102,8 +135,6 @@ const WaitingList = () => {
 
         return prev;
       });
-      const response = await updateGuestStatusAPI(id, newStatus);
-      console.log(" >>>> response ", response);
       setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
     } catch (error) {
       setLoadingIds((prev) => prev.filter((itemId) => itemId !== id));
@@ -140,6 +171,7 @@ const WaitingList = () => {
       ]
     );
   };
+
   useEffect(() => {
     const pulse = () => {
       Animated.loop(
@@ -180,10 +212,11 @@ const WaitingList = () => {
     const statusColor = getStatusColor(item.status);
 
     return (
-      <View style={[styles.guestItem]}>
+      <View style={[styles.guestItem]} key={item._id}>
         <View style={isTablet ? styles.guestDetails : styles.guestDetailsSmall}>
           <View style={styles.guestContainer}>
             <View style={styles.guestInfo}>
+              {/* <Text style={styles.index}>{item.tokenIndex}.</Text> */}
               <View style={styles.guestNameContainer}>
                 <View style={styles.guestNameContent}>
                   <View>
@@ -371,23 +404,52 @@ const WaitingList = () => {
       {loaders.isTodaysGuestLoading ? (
         <ActivityIndicator size={30} color="#E73E1F" />
       ) : (
-        <View style={styles.itemContent}>
+        <>
           {upcomingGuests?.length > 0 ? (
-            // <FlatList
-            //   data={upcomingGuests}
-            //   keyExtractor={(item) => item._id}
-            //   renderItem={renderItem}
-            //   contentContainerStyle={
-            //     isTablet ? styles.listContent : styles.listContentSmall
-            //   }
-            //   />
-            <ScrollView
-              style={isTablet ? styles.listContent : styles.listContentSmall}
-            >
-              {upcomingGuests.map((item, index) => (
-                <View key={item._id}>{renderItem({ item })}</View>
-              ))}
-            </ScrollView>
+            <>
+              {isTablet ? (
+                <ScrollView style={styles.tableContainer}>
+                  <View style={styles.tableHeader}>
+                    <Text style={styles.columnHeader}>No.</Text>
+                    <Text style={styles.columnHeader}>Name</Text>
+                    <Text style={styles.columnHeader}>Phone</Text>
+                    <Text style={styles.columnHeader}>Guests</Text>
+                    <Text style={styles.columnHeader}>Sharing</Text>
+                    <Text style={styles.columnHeader}>Status</Text>
+                    <Text style={styles.columnHeader}>Entry Time</Text>
+                    <Text style={styles.columnHeader}>Waiting Time</Text>
+                    <Text style={styles.columnHeader}>actions</Text>
+                  </View>
+                  {guestsWithIndex.map((item) => (
+                    <View key={item._id} style={styles.tableRow}>
+                      <Text style={styles.columnData}>{item.tokenIndex}</Text>
+                      <Text style={styles.columnData}>{item.name}</Text>
+                      <Text style={styles.columnData}>{item.phoneNumber}</Text>
+                      <Text style={styles.columnData}>
+                        {item.numberOfGuests}
+                      </Text>
+                      <Text style={styles.columnData}>
+                        {item.preferSharing}
+                      </Text>
+                      <Text style={styles.columnData}>
+                        {capitalize(item.status.toString())}
+                      </Text>
+                      <Text style={styles.columnData}>{item.entryTime}</Text>
+                      <Text style={styles.columnData}>{item.waitingTime}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              ) : (
+                <FlatList
+                  data={guestsWithIndex || filteredGuests}
+                  keyExtractor={(item) => item._id}
+                  renderItem={renderItem}
+                  contentContainerStyle={
+                    isTablet ? styles.listContent : styles.listContentSmall
+                  }
+                />
+              )}
+            </>
           ) : (
             <View style={styles.emptyStateContainer}>
               <MaterialIcons name="today" size={64} color="#DDD" />
@@ -397,7 +459,7 @@ const WaitingList = () => {
               </Text>
             </View>
           )}
-        </View>
+        </>
       )}
     </View>
   );
@@ -421,9 +483,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   listContent: {},
-  listContentSmall: {
-    flexWrap: "wrap",
-  },
+  listContentSmall: {},
   guestItem: {
     flexDirection: "row",
     boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
@@ -437,7 +497,11 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     width: "100%",
   },
-
+  index: {
+    fontSize: 16,
+    fontFamily: getFontFamily("bold"),
+    // marginBottom: 8,
+  },
   guestContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -652,6 +716,44 @@ const styles = StyleSheet.create({
   emptyStateSubtext: {
     fontSize: 14,
     color: "#999",
+  },
+  tableContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 16,
+  },
+
+  tableHeader: {
+    flexDirection: "row",
+    // justifyContent: "space-between",
+    padding: 16,
+    // backgroundColor: "#f7f7f7",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+
+  columnHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    flex: 1,
+    // textAlign: "left",
+  },
+
+  tableRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    textAlign: "left",
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+
+  columnData: {
+    fontSize: 14,
+    color: "#666",
+    flex: 1,
+    textAlign: "left",
   },
 });
 

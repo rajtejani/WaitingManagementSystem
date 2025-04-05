@@ -1,4 +1,3 @@
-import { AxiosError } from "axios";
 import React, { useContext, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,10 +12,11 @@ import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
+import Toast from "react-native-toast-message";
 import MaterialIcons from "react-native-vector-icons/Feather";
 import { loginAPI } from "../apis/auth";
-import { AppContext } from "../context/AppContext";
 import { getFontFamily } from "../constants/fontFamily";
+import { AppContext } from "../context/AppContext";
 const LogInScreen = () => {
   // TODO: REMOVE static username and password
   const [name, setName] = useState("");
@@ -73,7 +73,21 @@ const LogInScreen = () => {
 
     try {
       setIsLoading(true);
-      const response = await loginAPI({ username: name, password });
+      const response = await loginAPI({ username: name, password })
+        .then((response) => {
+          Toast.show({
+            type: "success",
+            text1: "Guest status updated successfully",
+          });
+          return response;
+        })
+        .catch((error) => {
+          Toast.show({
+            type: "error",
+            text1: error.message,
+          });
+          throw error;
+        });
 
       if (response.status === 200) {
         const { token, user } = response.data;
@@ -81,12 +95,7 @@ const LogInScreen = () => {
       }
       setIsLoading(false);
     } catch (error) {
-      if (error instanceof AxiosError) {
-        console.log(" >>>> error ", error.response);
-        setLoginError(error.response?.data.message);
-      } else {
-        setLoginError("We are unable to login. Please try again later.");
-      }
+      setLoginError((error as Error).message);
       setIsLoading(false);
     }
   };

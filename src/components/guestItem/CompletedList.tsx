@@ -6,14 +6,15 @@ import { getFontFamily } from "../../constants/fontFamily";
 import { useAppContext } from "../../context/AppContext";
 import { Guest } from "../../types/UserInterface";
 import { StatusEnum } from "../../utils/enums";
-
-const CompletedList = () => {
+interface CompletedListProps {
+  searchQuery: string;
+}
+const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
   const { todaysGuest } = useAppContext();
   // Get the device width
   const deviceWidth = Dimensions.get("window").width;
-
-  // Determine if the device is a tablet (1000px or greater width)
   const isTablet = deviceWidth <= 1000;
+
   const sortedGuests = useMemo(() => {
     let guestList = todaysGuest;
     guestList = guestList.filter((item) =>
@@ -30,6 +31,11 @@ const CompletedList = () => {
     });
   }, [todaysGuest]);
 
+  const filteredGuests = sortedGuests.sort((a, b) => {
+    const isA = a.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const isB = b.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return isA === isB ? 0 : isA ? -1 : 1;
+  });
   const getStatusColor = (status: StatusEnum) => {
     switch (status) {
       case StatusEnum.Seated:
@@ -89,7 +95,7 @@ const CompletedList = () => {
     <View style={styles.container}>
       {sortedGuests.length > 0 ? (
         <FlatList
-          data={sortedGuests}
+          data={sortedGuests || filteredGuests}
           keyExtractor={(item) => item._id}
           horizontal={false}
           renderItem={renderItem}

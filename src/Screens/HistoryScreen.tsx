@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
+import Toast from "react-native-toast-message";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
@@ -18,7 +19,17 @@ const HistoryScreen = () => {
 
     try {
       setIsLoading(true);
-      const response = await getGuestHistoryAPI(`${dateString}T05:30:00.000Z`);
+      const response = await getGuestHistoryAPI(`${dateString}T05:30:00.000Z`)
+        .then((response) => {
+          return response;
+        })
+        .catch((error) => {
+          Toast.show({
+            type: "error",
+            text1: error.message,
+          });
+          throw error;
+        });
       console.log(" History Response ", response);
       if (response.status === 200) setGuestList(response.data.guests);
       setIsLoading(false);

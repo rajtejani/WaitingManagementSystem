@@ -19,4 +19,5 @@ export interface Guest extends GuestInput {
   status: StatusEnum;
   entryTime: string;
   waitingTime: string;
+  tokenIndex: number;
 }

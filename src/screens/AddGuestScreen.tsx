@@ -19,10 +19,11 @@ import NativeHapticFeedback, {
 } from "react-native-haptic-feedback";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import SelectDropdown from "react-native-select-dropdown";
+import Toast from "react-native-toast-message";
 import Icon from "react-native-vector-icons/Feather";
-import { AppContext } from "../context/AppContext";
 import { newGuestEntryAPI } from "../apis/guest";
 import { getFontFamily } from "../constants/fontFamily";
+import { AppContext } from "../context/AppContext";
 import { GuestInput } from "../types/UserInterface";
 
 const AddGuestScreen = (props: any) => {
@@ -141,7 +142,21 @@ const AddGuestScreen = (props: any) => {
           preferSharing: numberOfGuests === 2 ? willingToShare : false,
           waitingTime: `${hours}:${minutes}`,
         };
-        const response = await newGuestEntryAPI(guestData);
+        const response = await newGuestEntryAPI(guestData)
+          .then((response) => {
+            Toast.show({
+              type: "success",
+              text1: "New guest added successfully",
+            });
+            return response;
+          })
+          .catch((error) => {
+            Toast.show({
+              type: "error",
+              text1: error.message,
+            });
+            throw error;
+          });
         if (response.status === 201) {
           console.log(" *-*-*-*-* ", response.data);
           setTodaysGuest((prev) =>
@@ -151,7 +166,7 @@ const AddGuestScreen = (props: any) => {
           navigation.goBack();
         }
       } catch (error: any) {
-        console.error("Error adding guest", error);
+        console.log("Error adding guest", error);
       }
     }
   };
@@ -243,8 +258,8 @@ const AddGuestScreen = (props: any) => {
                         data={hourOptions}
                         onSelect={(selectedItem, index) => {
                           setHours(selectedItem.hour);
-                          if (selectedItem.hour !== null) {
-                            const hoursValue = hours !== null ? hours : "00";
+                          if (selectedItem.hour !== "00") {
+                            const hoursValue = hours !== "00" ? hours : "00";
                             setWaitingTime(
                               `${selectedItem.hour}:${hoursValue}`
                             );
@@ -297,9 +312,9 @@ const AddGuestScreen = (props: any) => {
                         data={minutesOptions}
                         onSelect={(selectedItem, index) => {
                           setMinutes(selectedItem.minute);
-                          if (selectedItem.minute !== null) {
+                          if (selectedItem.minute !== "00") {
                             const minutesValue =
-                              minutes !== null ? minutes : "00";
+                              minutes !== "00" ? minutes : "00";
                             setWaitingTime(
                               `${selectedItem.minute}:${minutesValue}`
                             );

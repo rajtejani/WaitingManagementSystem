@@ -1,26 +1,35 @@
 import { useNavigation } from "@react-navigation/native";
 import { capitalize } from "lodash";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { useAppContext } from "../context/AppContext";
 import Badge from "../components/Badge";
 import CompletedList from "../components/guestItem/CompletedList";
 import WaitingList from "../components/guestItem/WaitingList";
-import { StatusEnum, UserRolesTypes } from "../utils/enums";
 import { getFontFamily } from "../constants/fontFamily";
+import { useAppContext } from "../context/AppContext";
+import { StatusEnum, UserRolesTypes } from "../utils/enums";
 
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
     "upcoming"
   );
-  const { todaysGuest, role } = useAppContext();
   const navigation = useNavigation();
+  const { todaysGuest, role } = useAppContext();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
   const upcomingGuestsCount = todaysGuest?.filter(
     (guest) => ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   ).length;
@@ -70,11 +79,20 @@ const HomeScreen = () => {
                 .join(" ")}
             </Text>
           </View>
+
           {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity onPress={handleIconPress}>
               <MaterialIcons name="add" size={28} color="#E73E1F" />
             </TouchableOpacity>
           )}
+        </View>
+        <View style={styles.searchBarContainer}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search guests"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
 
         <View style={styles.tabContainer}>
@@ -120,9 +138,12 @@ const HomeScreen = () => {
             </TouchableOpacity>
           )}
         </View>
-
         <View style={styles.listContainer}>
-          {activeTab === "upcoming" ? <WaitingList /> : <CompletedList />}
+          {activeTab === "upcoming" ? (
+            <WaitingList searchQuery={searchQuery} />
+          ) : (
+            <CompletedList searchQuery={searchQuery} />
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -148,6 +169,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontFamily: getFontFamily("bold"),
+  },
+  searchBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#F6F1E9",
+  },
+
+  searchBar: {
+    flex: 1,
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontSize: 16,
   },
   waitingTimeContainer: {
     flexDirection: "row",
