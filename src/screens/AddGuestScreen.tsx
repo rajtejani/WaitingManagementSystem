@@ -142,21 +142,8 @@ const AddGuestScreen = (props: any) => {
           preferSharing: numberOfGuests === 2 ? willingToShare : false,
           waitingTime: `${hours}:${minutes}`,
         };
-        const response = await newGuestEntryAPI(guestData)
-          .then((response) => {
-            Toast.show({
-              type: "success",
-              text1: "New guest added successfully",
-            });
-            return response;
-          })
-          .catch((error) => {
-            Toast.show({
-              type: "error",
-              text1: error.message,
-            });
-            throw error;
-          });
+        const response = await newGuestEntryAPI(guestData);
+        console.log(">>>>> response of new Guest Entry", response);
         if (response.status === 201) {
           console.log(" *-*-*-*-* ", response.data);
           setTodaysGuest((prev) =>

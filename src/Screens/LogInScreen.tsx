@@ -73,22 +73,8 @@ const LogInScreen = () => {
 
     try {
       setIsLoading(true);
-      const response = await loginAPI({ username: name, password })
-        .then((response) => {
-          Toast.show({
-            type: "success",
-            text1: "Guest status updated successfully",
-          });
-          return response;
-        })
-        .catch((error) => {
-          Toast.show({
-            type: "error",
-            text1: error.message,
-          });
-          throw error;
-        });
-
+      const response = await loginAPI({ username: name, password });
+      console.log(" >>>>>> response login ", response.data);
       if (response.status === 200) {
         const { token, user } = response.data;
         loginUserAction(token, user);
@@ -141,11 +127,6 @@ const LogInScreen = () => {
               ) : null}
             </View>
           </View>
-          {loadingError && (
-            <Text style={{ textAlign: "center", color: "#F00" }}>
-              {loadingError}
-            </Text>
-          )}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               disabled={isLoading}

@@ -19,18 +19,8 @@ const HistoryScreen = () => {
 
     try {
       setIsLoading(true);
-      const response = await getGuestHistoryAPI(`${dateString}T05:30:00.000Z`)
-        .then((response) => {
-          return response;
-        })
-        .catch((error) => {
-          Toast.show({
-            type: "error",
-            text1: error.message,
-          });
-          throw error;
-        });
-      console.log(" History Response ", response);
+      const response = await getGuestHistoryAPI(`${dateString}T05:30:00.000Z`);
+      console.log(">>>>> response guest history ", response);
       if (response.status === 200) setGuestList(response.data.guests);
       setIsLoading(false);
     } catch (error) {

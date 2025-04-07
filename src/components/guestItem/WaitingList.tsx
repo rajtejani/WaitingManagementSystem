@@ -9,7 +9,6 @@ import {
   Easing,
   FlatList,
   Linking,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -19,7 +18,6 @@ import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
-import Toast from "react-native-toast-message";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { updateGuestStatusAPI } from "../../apis/guest";
@@ -33,14 +31,12 @@ interface WaitingListProps {
 const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
   const [loadingIds, setLoadingIds] = useState<string[]>([]);
   const [error, setError] = useState<string | undefined>(undefined);
-
   const { role, todaysGuest, loaders, setTodaysGuest } = useAppContext();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
   const upcomingGuestsCount = todaysGuest?.filter(
     (guest) => ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   );
-
   const guestsWithIndex = upcomingGuestsCount.map((guest, index) => ({
     ...guest,
     tokenIndex: index + 1,
@@ -59,27 +55,12 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
-
   let upcomingGuests = cloneDeep(
     todaysGuest?.filter(
       (guest) =>
         ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
     )
   );
-  const getStatusColor = (status: StatusEnum) => {
-    switch (status) {
-      case StatusEnum.Waiting:
-        return "#A0A0A0";
-      case StatusEnum.TableReady:
-        return "#2196F3";
-      case StatusEnum.InLine:
-        return "#FFC107";
-      case StatusEnum.Seated:
-        return "#4CAF50";
-      case StatusEnum.Cancelled:
-        return "#F44336";
-    }
-  };
   const RNHapticFeedback = {
     trigger(
       type:
@@ -97,24 +78,25 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
   const hapticPress = () => {
     RNHapticFeedback.trigger("soft", defaultOptions);
   };
+  const getStatusColor = (status: StatusEnum) => {
+    switch (status) {
+      case StatusEnum.Waiting:
+        return "#A0A0A0";
+      case StatusEnum.TableReady:
+        return "#2196F3";
+      case StatusEnum.InLine:
+        return "#FFC107";
+      case StatusEnum.Seated:
+        return "#4CAF50";
+      case StatusEnum.Cancelled:
+        return "#F44336";
+    }
+  };
   const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
     hapticPress();
     try {
-      const response = await updateGuestStatusAPI(id, newStatus)
-        .then((response) => {
-          Toast.show({
-            type: "success",
-            text1: "Guest status updated successfully",
-          });
-          return response;
-        })
-        .catch((error) => {
-          Toast.show({
-            type: "error",
-            text1: error.message,
-          });
-          throw error;
-        });
+      const response = await updateGuestStatusAPI(id, newStatus);
+      console.log(" >>>> response of status changes ", response);
       // Update the AppContext state on success
       setTodaysGuest((prevGuests) => {
         return prevGuests.map((guest) => {
@@ -407,48 +389,14 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
         <>
           {upcomingGuests?.length > 0 ? (
             <>
-              {isTablet ? (
-                <ScrollView style={styles.tableContainer}>
-                  <View style={styles.tableHeader}>
-                    <Text style={styles.columnHeader}>No.</Text>
-                    <Text style={styles.columnHeader}>Name</Text>
-                    <Text style={styles.columnHeader}>Phone</Text>
-                    <Text style={styles.columnHeader}>Guests</Text>
-                    <Text style={styles.columnHeader}>Sharing</Text>
-                    <Text style={styles.columnHeader}>Status</Text>
-                    <Text style={styles.columnHeader}>Entry Time</Text>
-                    <Text style={styles.columnHeader}>Waiting Time</Text>
-                    <Text style={styles.columnHeader}>actions</Text>
-                  </View>
-                  {guestsWithIndex.map((item) => (
-                    <View key={item._id} style={styles.tableRow}>
-                      <Text style={styles.columnData}>{item.tokenIndex}</Text>
-                      <Text style={styles.columnData}>{item.name}</Text>
-                      <Text style={styles.columnData}>{item.phoneNumber}</Text>
-                      <Text style={styles.columnData}>
-                        {item.numberOfGuests}
-                      </Text>
-                      <Text style={styles.columnData}>
-                        {item.preferSharing}
-                      </Text>
-                      <Text style={styles.columnData}>
-                        {capitalize(item.status.toString())}
-                      </Text>
-                      <Text style={styles.columnData}>{item.entryTime}</Text>
-                      <Text style={styles.columnData}>{item.waitingTime}</Text>
-                    </View>
-                  ))}
-                </ScrollView>
-              ) : (
-                <FlatList
-                  data={guestsWithIndex || filteredGuests}
-                  keyExtractor={(item) => item._id}
-                  renderItem={renderItem}
-                  contentContainerStyle={
-                    isTablet ? styles.listContent : styles.listContentSmall
-                  }
-                />
-              )}
+              <FlatList
+                data={guestsWithIndex || filteredGuests}
+                keyExtractor={(item) => item._id}
+                renderItem={renderItem}
+                contentContainerStyle={
+                  isTablet ? styles.listContent : styles.listContentSmall
+                }
+              />
             </>
           ) : (
             <View style={styles.emptyStateContainer}>

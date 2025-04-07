@@ -86,14 +86,14 @@ const HomeScreen = () => {
             </TouchableOpacity>
           )}
         </View>
-        <View style={styles.searchBarContainer}>
+        {/* <View style={styles.searchBarContainer}>
           <TextInput
             style={styles.searchBar}
             placeholder="Search guests"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
-        </View>
+        </View> */}
 
         <View style={styles.tabContainer}>
           {role !== UserRolesTypes.TableManager && (

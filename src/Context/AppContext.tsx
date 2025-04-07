@@ -5,19 +5,18 @@ import React, {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
 } from "react";
 import { ActivityIndicator, Image, View } from "react-native";
-import Toast from "react-native-toast-message";
 import { verifyAPI } from "../apis/auth";
 import { getTodaysGuestAPI } from "../apis/guest";
 import apiInstance from "../config/axios";
 import pusher from "../services/pusher.service";
 import { Guest, User } from "../types/UserInterface";
 const Sound = require("react-native-sound");
-
 interface AppContextType {
   user?: User;
   token?: string;
@@ -51,10 +50,12 @@ const statusChangeSound = new Sound(
     }
   }
 );
+
 const newGuestSound = new Sound("beep.mp3", Sound.MAIN_BUNDLE, (error: any) => {
   if (error) {
     console.log("Failed to load the sound", error);
   }
+  console.log("duration in seconds: " + newGuestSound.getDuration());
 });
 
 export const AppContext = createContext<AppContextType>({
@@ -86,48 +87,65 @@ export const AppProvider: React.FC<{
     isGuestHistoryLoading: false,
   });
   const [accessToken, setToken] = useState("");
-  const [user, setUser] = useState<User>();
+  const [user, setUser] = useState<User | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
 
   const getCurrentUser = async () => {
+    console.log("🔄 [AppContext] Running getCurrentUser...");
+
+    const token = await AsyncStorage.getItem("@API_TOKEN");
+    console.log("📦 Retrieved token from storage:", token);
+
+    if (!token) {
+      console.log("🚫 No token found");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const token = await AsyncStorage.getItem("@API_TOKEN");
-
-      console.log(" Token >>>>>>", token);
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
       apiInstance.defaults.headers["auth_token"] = token;
-      const response = await verifyAPI(token)
-        .then((response) => {
-          Toast.show({
-            type: "success",
-            text1: "Verification successful",
-          });
-          return response;
-        })
-        .catch((error) => {
-          Toast.show({
-            type: "error",
-            text1: error.message,
-          });
-          throw error;
-        });
+      const response = await verifyAPI();
 
-      setToken(token);
+      console.log("✅ User verified:", response.data.user);
       setUser(response.data.user);
+      setToken(token);
+
+      // Store user for offline usage
+      await AsyncStorage.setItem(
+        "@USER_INFO",
+        JSON.stringify(response.data.user)
+      );
+    } catch (error: any) {
+      if (error.message === "Network Error") {
+        console.log("🌐 No internet - using cached login state");
+
+        // Try to load cached user
+        const cachedUser = await AsyncStorage.getItem("@USER_INFO");
+        if (cachedUser) {
+          setUser(JSON.parse(cachedUser));
+          setToken(token); // Keep using the stored token
+          console.log("🧠 Loaded cached user from storage");
+        } else {
+          setUser(undefined);
+          console.log("⚠️ No cached user found");
+        }
+      } else {
+        console.log(
+          "❌ Token invalid or server error:",
+          error.message || error
+        );
+        setUser(undefined);
+      }
+    } finally {
       setIsLoading(false);
-    } catch (error) {
-      setError((error as Error).message);
-      setIsLoading(false);
+      console.log("✅ [AppContext] Done loading");
     }
   };
 
   const loginUserAction = async (token: string, user: User) => {
     await AsyncStorage.setItem("@API_TOKEN", token);
+    await AsyncStorage.setItem("@CACHED_USER", JSON.stringify(user));
 
     apiInstance.defaults.headers["auth_token"] = token;
     setUser(user);
@@ -135,17 +153,8 @@ export const AppProvider: React.FC<{
     try {
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
 
-      const response = await getTodaysGuestAPI()
-        .then((response) => {
-          return response;
-        })
-        .catch((error) => {
-          Toast.show({
-            type: "error",
-            text1: error.message,
-          });
-          throw error;
-        });
+      const response = await getTodaysGuestAPI();
+      console.log(" >>>> response after login get today guest api ", response);
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
 
       if (response.status === 200) {
@@ -160,17 +169,8 @@ export const AppProvider: React.FC<{
   const getTodaysGuest = async () => {
     try {
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
-      const response = await getTodaysGuestAPI()
-        .then((response) => {
-          return response;
-        })
-        .catch((error) => {
-          Toast.show({
-            type: "error",
-            text1: error.message,
-          });
-          throw error;
-        });
+      const response = await getTodaysGuestAPI();
+      console.log(" >>>> response get today guest api ", response.data.user);
       // const guestsWithIndex = response.data.guests.map((guest, index) => ({
       //   ...guest,
       //   tokenIndex: index + 1,
@@ -289,6 +289,7 @@ export const AppProvider: React.FC<{
       }}
     >
       {children}
+      {console.log("🧠 AppContext.Provider user:", user)}
     </AppContext.Provider>
   );
 };

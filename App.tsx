@@ -24,11 +24,19 @@ export default function App(props: any) {
 }
 
 const Routes = () => {
-  const { token, user, isLoading } = useContext(AppContext);
+  const { user, isLoading } = useContext(AppContext);
+  console.log("🧭 [Routes] isLoading:", isLoading);
+  console.log("🧍 [Routes] user:", user);
+
+  if (isLoading) {
+    console.log("⏳ Still loading...");
+    return null;
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!token ? (
+        {!user ? (
           <>
             <Stack.Screen name="Main" component={LogInScreen} />
           </>
