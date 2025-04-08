@@ -5,7 +5,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -17,6 +16,7 @@ import apiInstance from "../config/axios";
 import pusher from "../services/pusher.service";
 import { Guest, User } from "../types/UserInterface";
 const Sound = require("react-native-sound");
+
 interface AppContextType {
   user?: User;
   token?: string;
@@ -51,13 +51,6 @@ const statusChangeSound = new Sound(
   }
 );
 
-const newGuestSound = new Sound("beep.mp3", Sound.MAIN_BUNDLE, (error: any) => {
-  if (error) {
-    console.log("Failed to load the sound", error);
-  }
-  console.log("duration in seconds: " + newGuestSound.getDuration());
-});
-
 export const AppContext = createContext<AppContextType>({
   user: undefined,
   token: "",
@@ -89,7 +82,6 @@ export const AppProvider: React.FC<{
   const [accessToken, setToken] = useState("");
   const [user, setUser] = useState<User | undefined>(undefined);
   const [error, setError] = useState<string | undefined>(undefined);
-
   const getCurrentUser = async () => {
     console.log("🔄 [AppContext] Running getCurrentUser...");
 
@@ -218,13 +210,6 @@ export const AppProvider: React.FC<{
           });
         }
         if (event.eventName === "new_guest") {
-          newGuestSound.play((success: any) => {
-            if (success) {
-              console.log("successfully finished playing");
-            } else {
-              console.log("playback failed due to audio decoding errors");
-            }
-          });
           setTodaysGuest((prev) => uniqBy([...prev, data.guest], "_id"));
         }
       },

@@ -20,6 +20,7 @@ import WaitingList from "../components/guestItem/WaitingList";
 import { getFontFamily } from "../constants/fontFamily";
 import { useAppContext } from "../context/AppContext";
 import { StatusEnum, UserRolesTypes } from "../utils/enums";
+import AnimatedSearchBox from "../components/AnimatedSearchBox";
 
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
@@ -72,28 +73,23 @@ const HomeScreen = () => {
                 ? "Guest Waiting List"
                 : "Guest Completed List"}
             </Text>
-            <Text style={{ color: "#666", fontSize: 14, fontWeight: 500 }}>
+            <Text style={styles.subTitle}>
               {role
                 ?.split("_")
                 .map((word) => capitalize(word))
                 .join(" ")}
             </Text>
           </View>
+          {/* <View> */}
+          {/* </View> */}
 
+          <AnimatedSearchBox onChangeText={setSearchQuery} />
           {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity onPress={handleIconPress}>
               <MaterialIcons name="add" size={28} color="#E73E1F" />
             </TouchableOpacity>
           )}
         </View>
-        {/* <View style={styles.searchBarContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search guests"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View> */}
 
         <View style={styles.tabContainer}>
           {role !== UserRolesTypes.TableManager && (
@@ -166,6 +162,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  subTitle: {
+    fontSize: 14,
+    fontFamily: getFontFamily("medium"),
+    color: "#666",
+  },
   title: {
     fontSize: 20,
     fontFamily: getFontFamily("bold"),
@@ -180,12 +181,21 @@ const styles = StyleSheet.create({
 
   searchBar: {
     flex: 1,
-    height: 40,
-    borderColor: "#ccc",
+    padding: 10,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    fontSize: 16,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+
+  iconContainer: {
+    // flex: 1,
+    // width: "auto",
+    position: "relative",
+    flexDirection: "row",
+    gap: 20,
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   waitingTimeContainer: {
     flexDirection: "row",
@@ -208,8 +218,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#EEEEEE",
-    zIndex: 100,
-    position: "relative",
   },
   tab: {
     paddingVertical: 10,

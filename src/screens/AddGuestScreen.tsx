@@ -25,6 +25,7 @@ import { newGuestEntryAPI } from "../apis/guest";
 import { getFontFamily } from "../constants/fontFamily";
 import { AppContext } from "../context/AppContext";
 import { GuestInput } from "../types/UserInterface";
+const Sound = require("react-native-sound");
 
 const AddGuestScreen = (props: any) => {
   const { setTodaysGuest } = useContext(AppContext);
@@ -59,6 +60,16 @@ const AddGuestScreen = (props: any) => {
     { minute: "50" },
     { minute: "55" },
   ];
+  const newGuestSound = new Sound(
+    "beep.mp3",
+    Sound.MAIN_BUNDLE,
+    (error: any) => {
+      if (error) {
+        console.log("Failed to load the sound", error);
+      }
+      console.log("duration in seconds: " + newGuestSound.getDuration());
+    }
+  );
 
   const defaultOptions = {
     enableVibrateFallback: true,
@@ -96,6 +107,7 @@ const AddGuestScreen = (props: any) => {
     setHours(null);
     setMinutes(null);
   };
+
   const handleAddGuest = async () => {
     hapticPress();
 
@@ -145,6 +157,13 @@ const AddGuestScreen = (props: any) => {
         const response = await newGuestEntryAPI(guestData);
         console.log(">>>>> response of new Guest Entry", response);
         if (response.status === 201) {
+          newGuestSound.play((success: any) => {
+            if (success) {
+              console.log("successfully finished playing");
+            } else {
+              console.log("playback failed due to audio decoding errors");
+            }
+          });
           console.log(" *-*-*-*-* ", response.data);
           setTodaysGuest((prev) =>
             uniqBy([...prev, response.data.guest], "_id")

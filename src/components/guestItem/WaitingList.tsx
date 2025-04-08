@@ -39,28 +39,19 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
   );
   const guestsWithIndex = upcomingGuestsCount.map((guest, index) => ({
     ...guest,
-    tokenIndex: index + 1,
+    tokenIndex: (index + 1).toString().padStart(2, "0"),
   }));
-
+  const filteredGuests = guestsWithIndex.filter((guest) =>
+    guest.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   // Get the device width
   const deviceWidth = Dimensions.get("window").width;
   const isTablet = deviceWidth >= 1000;
 
-  const filteredGuests = guestsWithIndex.sort((a, b) => {
-    const isA = a.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const isB = b.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return isA === isB ? 0 : isA ? -1 : 1;
-  });
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
-  let upcomingGuests = cloneDeep(
-    todaysGuest?.filter(
-      (guest) =>
-        ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
-    )
-  );
   const RNHapticFeedback = {
     trigger(
       type:
@@ -78,6 +69,12 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
   const hapticPress = () => {
     RNHapticFeedback.trigger("soft", defaultOptions);
   };
+  let upcomingGuests = cloneDeep(
+    todaysGuest?.filter(
+      (guest) =>
+        ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
+    )
+  );
   const getStatusColor = (status: StatusEnum) => {
     switch (status) {
       case StatusEnum.Waiting:
@@ -194,152 +191,126 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
     const statusColor = getStatusColor(item.status);
 
     return (
-      <View style={[styles.guestItem]} key={item._id}>
-        <View style={isTablet ? styles.guestDetails : styles.guestDetailsSmall}>
-          <View style={styles.guestContainer}>
-            <View style={styles.guestInfo}>
-              {/* <Text style={styles.index}>{item.tokenIndex}.</Text> */}
-              <View style={styles.guestNameContainer}>
-                <View style={styles.guestNameContent}>
-                  <View>
-                    <Text style={[styles.guestName]}>{item.name}</Text>
-                  </View>
-                  <View>
-                    <Text style={[styles.guestPhone]}>{item.phoneNumber}</Text>
-                  </View>
-                </View>
-                <View style={styles.numberCircle}>
-                  <Text style={styles.numberText}>{item.numberOfGuests}</Text>
-                  {item.preferSharing && (
-                    <Text style={styles.sharingText}>Sharing</Text>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.timeContainer}>
-                <View style={styles.timeRow}>
-                  <View style={styles.timeInfo}>
-                    <View style={styles.timeBlock}>
-                      <MaterialIcons
-                        name="access-time"
-                        size={18}
-                        style={[styles.icon]}
-                      />
-                      <Text style={[styles.timeText]}>
-                        {format(parseISO(item.entryTime), "hh:mm a")}
+      <>
+        <View style={[styles.guestItem]} key={item._id}>
+          <View
+            // style={isTablet ? styles.guestDetails : styles.guestDetailsSmall}
+            style={styles.guestDetails}
+          >
+            <View style={styles.tokenContainer}>
+              <Text style={styles.tokenText}>Token {item.tokenIndex}</Text>
+            </View>
+            <View style={styles.guestContainer}>
+              <View style={styles.guestInfo}>
+                <View style={styles.guestNameContainer}>
+                  <View style={styles.guestNameContent}>
+                    <View>
+                      <Text style={[styles.guestName]}>{item.name}</Text>
+                    </View>
+                    <View>
+                      <Text style={[styles.guestPhone]}>
+                        {item.phoneNumber}
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.timeInfo}>
-                    <View style={styles.timeBlock}>
-                      <MaterialIcons
-                        name="watch"
-                        size={18}
-                        style={[styles.icon]}
-                      />
-                      <Text style={[styles.timeText]}>{item.waitingTime}</Text>
-                    </View>
+                  <View style={styles.numberCircle}>
+                    <Text style={styles.numberText}>{item.numberOfGuests}</Text>
+                    {item.preferSharing && (
+                      <Text style={styles.sharingText}>Sharing</Text>
+                    )}
                   </View>
                 </View>
-                <View
-                  style={[
-                    styles.statusContainer,
-                    { backgroundColor: `${statusColor}20` },
-                    { borderColor: statusColor },
-                  ]}
-                >
-                  <Animated.View
+                <View style={styles.timeContainer}>
+                  <View style={styles.timeRow}>
+                    <View style={styles.timeInfo}>
+                      <View style={styles.timeBlock}>
+                        <MaterialIcons
+                          name="access-time"
+                          size={18}
+                          style={[styles.icon]}
+                        />
+                        <Text style={[styles.timeText]}>
+                          {format(parseISO(item.entryTime), "hh:mm a")}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.timeInfo}>
+                      <View style={styles.timeBlock}>
+                        <MaterialIcons
+                          name="watch"
+                          size={18}
+                          style={[styles.icon]}
+                        />
+                        <Text style={[styles.timeText]}>
+                          {item.waitingTime}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View
                     style={[
-                      styles.statusIcon,
-                      {
-                        backgroundColor: statusColor,
-                      },
-                      {
-                        transform: [{ scale: scaleAnim }],
-                        opacity: opacityAnim,
-                      },
+                      styles.statusContainer,
+                      { backgroundColor: `${statusColor}20` },
+                      { borderColor: statusColor },
                     ]}
-                  />
-                  <View>
-                    <Text style={[styles.statusText, { color: statusColor }]}>
-                      {capitalize(item.status.toString())}
-                    </Text>
+                  >
+                    <Animated.View
+                      style={[
+                        styles.statusIcon,
+                        {
+                          backgroundColor: statusColor,
+                        },
+                        {
+                          transform: [{ scale: scaleAnim }],
+                          opacity: opacityAnim,
+                        },
+                      ]}
+                    />
+                    <View>
+                      <Text style={[styles.statusText, { color: statusColor }]}>
+                        {capitalize(item.status.toString())}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
             </View>
-          </View>
 
-          <View style={styles.actions}>
-            <View style={styles.actionsContainer}>
-              {role !== UserRolesTypes.TableManager &&
-                item.status !== StatusEnum.Seated && (
-                  <TouchableOpacity
-                    style={styles.callButton}
-                    onPress={() => handleCancel(item._id)}
-                  >
-                    {loadingIds.includes(item._id) ? (
-                      <ActivityIndicator size={20} color="#FFF" />
-                    ) : (
-                      <Ionicons
-                        name="trash"
-                        size={20}
-                        color="#FFF"
-                        style={styles.callIcon}
-                      />
-                    )}
-                  </TouchableOpacity>
-                )}
-              {role === UserRolesTypes.TableManager && (
-                <>
-                  {item.status === StatusEnum.Waiting && (
+            <View style={styles.actions}>
+              <View style={styles.actionsContainer}>
+                {role !== UserRolesTypes.TableManager &&
+                  item.status !== StatusEnum.Seated && (
                     <TouchableOpacity
-                      style={styles.completeButton(
-                        getStatusColor(StatusEnum.TableReady)
-                      )}
-                      onPress={() =>
-                        handleStatusChange(item._id, StatusEnum.TableReady)
-                      }
+                      style={styles.callButton}
+                      onPress={() => handleCancel(item._id)}
                     >
-                      {loadingIds.includes(item._id) && (
+                      {loadingIds.includes(item._id) ? (
                         <ActivityIndicator size={20} color="#FFF" />
+                      ) : (
+                        <Ionicons
+                          name="trash"
+                          size={20}
+                          color="#FFF"
+                          style={styles.callIcon}
+                        />
                       )}
-                      <Text style={styles.completeText}>Table Ready</Text>
                     </TouchableOpacity>
                   )}
-                  {item.status === StatusEnum.InLine && (
-                    <TouchableOpacity
-                      style={styles.completeButton(
-                        getStatusColor(StatusEnum.Seated)
-                      )}
-                      onPress={() =>
-                        handleStatusChange(item._id, StatusEnum.Seated)
-                      }
-                    >
-                      {loadingIds.includes(item._id) && (
-                        <ActivityIndicator size={20} color="#FFF" />
-                      )}
-                      <Text style={styles.completeText}>Seated</Text>
-                    </TouchableOpacity>
-                  )}
-                </>
-              )}
-              {role !== UserRolesTypes.TableManager && (
-                <>
+                {role === UserRolesTypes.TableManager && (
                   <>
-                    {item.status === StatusEnum.TableReady && (
+                    {item.status === StatusEnum.Waiting && (
                       <TouchableOpacity
                         style={styles.completeButton(
-                          getStatusColor(StatusEnum.InLine)
+                          getStatusColor(StatusEnum.TableReady)
                         )}
                         onPress={() =>
-                          handleStatusChange(item._id, StatusEnum.InLine)
+                          handleStatusChange(item._id, StatusEnum.TableReady)
                         }
                       >
                         {loadingIds.includes(item._id) && (
                           <ActivityIndicator size={20} color="#FFF" />
                         )}
-                        <Text style={styles.completeText}>In Line</Text>
+                        <Text style={styles.completeText}>Table Ready</Text>
                       </TouchableOpacity>
                     )}
                     {item.status === StatusEnum.InLine && (
@@ -358,27 +329,63 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                       </TouchableOpacity>
                     )}
                   </>
-                </>
-              )}
+                )}
+                {role !== UserRolesTypes.TableManager && (
+                  <>
+                    <>
+                      {item.status === StatusEnum.TableReady && (
+                        <TouchableOpacity
+                          style={styles.completeButton(
+                            getStatusColor(StatusEnum.InLine)
+                          )}
+                          onPress={() =>
+                            handleStatusChange(item._id, StatusEnum.InLine)
+                          }
+                        >
+                          {loadingIds.includes(item._id) && (
+                            <ActivityIndicator size={20} color="#FFF" />
+                          )}
+                          <Text style={styles.completeText}>In Line</Text>
+                        </TouchableOpacity>
+                      )}
+                      {item.status === StatusEnum.InLine && (
+                        <TouchableOpacity
+                          style={styles.completeButton(
+                            getStatusColor(StatusEnum.Seated)
+                          )}
+                          onPress={() =>
+                            handleStatusChange(item._id, StatusEnum.Seated)
+                          }
+                        >
+                          {loadingIds.includes(item._id) && (
+                            <ActivityIndicator size={20} color="#FFF" />
+                          )}
+                          <Text style={styles.completeText}>Seated</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
+                  </>
+                )}
 
-              {role !== UserRolesTypes.TableManager && (
-                <TouchableOpacity
-                  style={styles.callButton}
-                  onPress={() => handleCall(item.phoneNumber)}
-                >
-                  <Ionicons
-                    name="call-outline"
-                    size={20}
-                    color="#FFF"
-                    style={styles.callIcon}
-                  />
-                  <Text style={styles.callText}>Call</Text>
-                </TouchableOpacity>
-              )}
+                {role !== UserRolesTypes.TableManager && (
+                  <TouchableOpacity
+                    style={styles.callButton}
+                    onPress={() => handleCall(item.phoneNumber)}
+                  >
+                    <Ionicons
+                      name="call-outline"
+                      size={20}
+                      color="#FFF"
+                      style={styles.callIcon}
+                    />
+                    <Text style={styles.callText}>Call</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
         </View>
-      </View>
+      </>
     );
   };
   return (
@@ -387,10 +394,11 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
         <ActivityIndicator size={30} color="#E73E1F" />
       ) : (
         <>
-          {upcomingGuests?.length > 0 ? (
+          {filteredGuests?.length > 0 ? (
             <>
               <FlatList
-                data={guestsWithIndex || filteredGuests}
+                // data={guestsWithIndex || filteredGuests}
+                data={filteredGuests}
                 keyExtractor={(item) => item._id}
                 renderItem={renderItem}
                 contentContainerStyle={
@@ -439,20 +447,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF",
     borderRadius: 8,
     marginBottom: 16,
+    // width: "100%",
   },
   guestDetails: {
     flex: 1,
     flexDirection: "column",
     width: "100%",
-  },
-  index: {
-    fontSize: 16,
-    fontFamily: getFontFamily("bold"),
-    // marginBottom: 8,
+    // padding: 12,
   },
   guestContainer: {
     flexDirection: "row",
     alignItems: "center",
+    // paddingRight: 16,
   },
   numberCircle: {
     marginRight: 18,
@@ -527,7 +533,22 @@ const styles = StyleSheet.create({
   },
   guestInfo: {
     flexDirection: "column",
-    flex: 1,
+  },
+
+  tokenContainer: {
+    justifyContent: "center",
+    flexDirection: "row",
+    // width: 30,
+    // height: 30,
+    alignItems: "center",
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  tokenText: {
+    fontSize: 16,
+    fontFamily: getFontFamily("bold"),
+    color: "#fff",
   },
   guestNameContainer: {
     width: "100%",
@@ -587,6 +608,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 14,
+    // paddingRight: 16,
+    // width: "100%",
   },
   actionsContainer: {
     flexDirection: "row",

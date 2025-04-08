@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { FlatList } from "react-native-gesture-handler";
-import Toast from "react-native-toast-message";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
 import { getFontFamily } from "../constants/fontFamily";
 import { Guest } from "../types/UserInterface";
+import { StatusEnum } from "../utils/enums";
 
 const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [guestList, setGuestList] = useState<Guest[]>([]);
-
   const handleDateSelected = async (date: Date) => {
     setSelectedDate(date);
     const dateString = date.toISOString().split("T")[0];
@@ -20,14 +19,14 @@ const HistoryScreen = () => {
     try {
       setIsLoading(true);
       const response = await getGuestHistoryAPI(`${dateString}T05:30:00.000Z`);
-      console.log(">>>>> response guest history ", response);
+      console.log(">>>>> response guest history ", response.data);
       if (response.status === 200) setGuestList(response.data.guests);
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      console.error("Error fetching guest history:", error);
     }
   };
+
   useEffect(() => {
     try {
       setIsLoading(true);
@@ -35,7 +34,6 @@ const HistoryScreen = () => {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      console.error("Error fetching guest history:", error);
     }
   }, []);
   return (
