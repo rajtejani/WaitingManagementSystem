@@ -163,17 +163,17 @@ export const AppProvider: React.FC<{
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
       const response = await getTodaysGuestAPI();
       console.log(" >>>> response get today guest api ", response.data.user);
-      // const guestsWithIndex = response.data.guests.map((guest, index) => ({
-      //   ...guest,
-      //   tokenIndex: index + 1,
-      // }));
-      // console.log(
-      //   " getTodaysGuest Index Number of guest=====>",
-      //   guestsWithIndex
-      // );
+      const guestsWithIndex = response.data.guests.map((guest, index) => ({
+        ...guest,
+        tokenIndex: index + 1,
+      }));
+      console.log(
+        " getTodaysGuest Index Number of guest=====>",
+        guestsWithIndex
+      );
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
       if (response.status === 200) {
-        setTodaysGuest(response.data.guests);
+        setTodaysGuest(guestsWithIndex);
       }
     } catch (error) {
       setError((error as Error).message);

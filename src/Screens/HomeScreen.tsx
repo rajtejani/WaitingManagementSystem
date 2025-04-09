@@ -1,26 +1,20 @@
 import { useNavigation } from "@react-navigation/native";
 import { capitalize } from "lodash";
 import React, { useState } from "react";
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import AnimatedSearchBar from "../components/AnimatedSearchBar";
 import Badge from "../components/Badge";
 import CompletedList from "../components/guestItem/CompletedList";
 import WaitingList from "../components/guestItem/WaitingList";
 import { getFontFamily } from "../constants/fontFamily";
 import { useAppContext } from "../context/AppContext";
 import { StatusEnum, UserRolesTypes } from "../utils/enums";
-import AnimatedSearchBox from "../components/AnimatedSearchBox";
 
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
@@ -80,10 +74,7 @@ const HomeScreen = () => {
                 .join(" ")}
             </Text>
           </View>
-          {/* <View> */}
-          {/* </View> */}
-
-          <AnimatedSearchBox onChangeText={setSearchQuery} />
+          <AnimatedSearchBar onSearch={setSearchQuery} />
           {role !== UserRolesTypes.TableManager && (
             <TouchableOpacity onPress={handleIconPress}>
               <MaterialIcons name="add" size={28} color="#E73E1F" />
@@ -178,7 +169,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: "#F6F1E9",
   },
-
   searchBar: {
     flex: 1,
     padding: 10,
@@ -189,8 +179,6 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
-    // flex: 1,
-    // width: "auto",
     position: "relative",
     flexDirection: "row",
     gap: 20,
