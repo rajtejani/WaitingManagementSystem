@@ -19,12 +19,11 @@ import NativeHapticFeedback, {
 } from "react-native-haptic-feedback";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import SelectDropdown from "react-native-select-dropdown";
-import Toast from "react-native-toast-message";
 import Icon from "react-native-vector-icons/Feather";
 import { newGuestEntryAPI } from "../apis/guest";
 import { getFontFamily } from "../constants/fontFamily";
 import { AppContext } from "../context/AppContext";
-import { GuestInput } from "../types/UserInterface";
+import { Guest, GuestInput } from "../types/UserInterface";
 const Sound = require("react-native-sound");
 
 const AddGuestScreen = (props: any) => {
@@ -36,11 +35,12 @@ const AddGuestScreen = (props: any) => {
   const [numberOfGuest, setNumberOfGuest] = useState("");
   const [numberOfGuests, setNumberOfGuests] = useState<number | null>(null);
   const [willingToShare, setWillingToShare] = useState(false);
-  const [waitingTime, setWaitingTime] = useState<string | null>(null);
+  const [waitingTime, setWaitingTime] = useState<string>("00:00");
   const [waitingError, setWaitingError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [hours, setHours] = useState<string | null>(null);
-  const [minutes, setMinutes] = useState<string | null>(null);
+  const [hours, setHours] = useState<string>("00");
+  const [minutes, setMinutes] = useState<string>("00");
+
   const navigation = useNavigation();
   const hourOptions = [
     { hour: "00" },
@@ -155,7 +155,7 @@ const AddGuestScreen = (props: any) => {
           waitingTime: `${hours}:${minutes}`,
         };
         const response = await newGuestEntryAPI(guestData);
-        console.log(">>>>> response of new Guest Entry", response);
+        console.log(">>>>> response of new Guest Entry", response.data);
         if (response.status === 201) {
           newGuestSound.play((success: any) => {
             if (success) {
@@ -165,9 +165,16 @@ const AddGuestScreen = (props: any) => {
             }
           });
           console.log(" *-*-*-*-* ", response.data);
-          setTodaysGuest((prev) =>
-            uniqBy([...prev, response.data.guest], "_id")
-          );
+          const assignToken = (guests: Guest[]) => {
+            return guests.map((guest, index) => ({
+              ...guest,
+              tokenIndex: index + 1,
+            }));
+          };
+          setTodaysGuest((prev) => {
+            const dataGuest = uniqBy([...prev, response.data.guest], "_id");
+            return assignToken(dataGuest);
+          });
           resetForm();
           navigation.goBack();
         }
@@ -263,13 +270,9 @@ const AddGuestScreen = (props: any) => {
                       <SelectDropdown
                         data={hourOptions}
                         onSelect={(selectedItem, index) => {
-                          setHours(selectedItem.hour);
-                          if (selectedItem.hour !== "00") {
-                            const hoursValue = hours !== "00" ? hours : "00";
-                            setWaitingTime(
-                              `${selectedItem.hour}:${hoursValue}`
-                            );
-                          }
+                          const newHour = selectedItem.hour;
+                          setHours(newHour);
+                          setWaitingTime(`${newHour}:${minutes}`);
                         }}
                         renderButton={(selectedItem, isOpened) => {
                           return (
@@ -317,14 +320,9 @@ const AddGuestScreen = (props: any) => {
                       <SelectDropdown
                         data={minutesOptions}
                         onSelect={(selectedItem, index) => {
-                          setMinutes(selectedItem.minute);
-                          if (selectedItem.minute !== "00") {
-                            const minutesValue =
-                              minutes !== "00" ? minutes : "00";
-                            setWaitingTime(
-                              `${selectedItem.minute}:${minutesValue}`
-                            );
-                          }
+                          const newMinutes = selectedItem.minute;
+                          setMinutes(newMinutes);
+                          setWaitingTime(`${hours}:${newMinutes}`);
                         }}
                         renderButton={(selectedItem, isOpened) => {
                           return (
@@ -369,9 +367,9 @@ const AddGuestScreen = (props: any) => {
                       />
                     </View>
                   </View>
-                  {waitingError ? (
+                  {/* {waitingError ? (
                     <Text style={styles.errorText}>{waitingError}</Text>
-                  ) : null}
+                  ) : null} */}
                 </View>
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Number of Guests</Text>

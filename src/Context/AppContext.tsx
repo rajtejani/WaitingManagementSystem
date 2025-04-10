@@ -1,6 +1,6 @@
 import type { PusherEvent } from "@pusher/pusher-websocket-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { uniqBy } from "lodash";
+import { merge, uniqBy } from "lodash";
 import React, {
   createContext,
   useContext,
@@ -162,14 +162,12 @@ export const AppProvider: React.FC<{
     try {
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
       const response = await getTodaysGuestAPI();
-      console.log(" >>>> response get today guest api ", response.data.user);
-      const guestsWithIndex = response.data.guests.map((guest, index) => ({
-        ...guest,
-        tokenIndex: index + 1,
-      }));
-      console.log(
-        " getTodaysGuest Index Number of guest=====>",
-        guestsWithIndex
+      console.log(" >>>> response get today guest api ", response);
+      const guestsWithIndex = response.data.guests.map(
+        (guest: Guest[], index: number) => ({
+          ...guest,
+          tokenIndex: index + 1,
+        })
       );
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
       if (response.status === 200) {
@@ -202,7 +200,7 @@ export const AppProvider: React.FC<{
           setTodaysGuest((prev) => {
             return prev.map((currGuest) => {
               if (currGuest._id === guest._id) {
-                return guest;
+                return merge(currGuest, guest);
               }
 
               return currGuest;
@@ -274,7 +272,6 @@ export const AppProvider: React.FC<{
       }}
     >
       {children}
-      {console.log("🧠 AppContext.Provider user:", user)}
     </AppContext.Provider>
   );
 };
