@@ -27,6 +27,7 @@ import { getFontFamily } from "../../constants/fontFamily";
 import { useAppContext } from "../../context/AppContext";
 import { Guest } from "../../types/UserInterface";
 import { StatusEnum, UserRolesTypes } from "../../utils/enums";
+
 interface WaitingListProps {
   searchQuery: string;
 }
@@ -87,7 +88,6 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
 
     try {
       const response = await updateGuestStatusAPI(id, newStatus);
-
       console.log(" >>>> response of status changes", response);
       // Update the AppContext state on success
       setTodaysGuest((prevGuests) => {
@@ -193,10 +193,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
               {item.tokenIndex?.toString()?.padStart(3, "0")}
             </Text>
           </View>
-          <View
-            // style={isTablet ? styles.guestDetails : styles.guestDetailsSmall}
-            style={styles.guestDetails}
-          >
+          <View style={styles.guestDetails}>
             <View style={styles.guestInfoContainer}>
               <View style={styles.guestContainer}>
                 <View style={styles.guestInfo}>
@@ -404,46 +401,58 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
             <>
               {isTablet ? (
                 <>
+                  <View style={styles.tableHeader}>
+                    <Text style={styles.columnHeader}>No.</Text>
+                    <Text style={styles.columnHeader}>Name</Text>
+                    <Text style={styles.columnHeader}>Phone</Text>
+                    <Text style={styles.columnHeader}>Guests</Text>
+                    <Text style={styles.columnHeader}>Sharing</Text>
+                    <Text style={styles.columnHeader}>Status</Text>
+                    <Text style={styles.columnHeader}>Entry Time</Text>
+                    <Text style={styles.columnHeader}>Wait Time</Text>
+                    <Text
+                      style={[styles.columnHeader, { borderRightWidth: 0 }]}
+                    >
+                      {" "}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.columnHeader,
+                        {
+                          textAlign: "center",
+                          borderRightWidth: 0,
+                        },
+                      ]}
+                    >
+                      Actions
+                    </Text>
+                    <Text style={styles.columnHeader}> </Text>
+                  </View>
                   <ScrollView style={styles.tableContainer}>
-                    <View style={styles.tableHeader}>
-                      <Text style={styles.columnHeader}>No.</Text>
-                      <Text style={styles.columnHeader}>Name</Text>
-                      <Text style={styles.columnHeader}>Phone</Text>
-                      <Text style={styles.columnHeader}>Guests</Text>
-                      <Text style={styles.columnHeader}>Sharing</Text>
-                      <Text style={styles.columnHeader}>Status</Text>
-                      <Text style={styles.columnHeader}>Entry Time</Text>
-                      <Text style={styles.columnHeader}>Wait Time</Text>
-                      <Text style={styles.columnHeader}>Actions</Text>
-                      <Text style={styles.columnHeader}>Call</Text>
-                      <Text style={styles.columnHeader}>Cancel</Text>
-                    </View>
                     {filteredGuests?.map((item: Guest) => (
-                      <View key={item._id} style={[styles.tableRow]}>
-                        <View style={styles.columns}>
-                          <Text style={styles.columnData}>
+                      <View key={item._id} style={[styles.columnRow]}>
+                        <View style={styles.columnData}>
+                          <Text style={styles.columns}>
                             {item.tokenIndex?.toString()?.padStart(3, "0")}
                           </Text>
                         </View>
-                        <View style={styles.columns}>
-                          <Text style={styles.columnData}>{item.name}</Text>
+                        <View style={styles.columnData}>
+                          <Text style={styles.columns}>{item.name}</Text>
                         </View>
-                        <View style={styles.columns}>
-                          <Text style={styles.columnData}>
-                            {item.phoneNumber}
-                          </Text>
+                        <View style={styles.columnData}>
+                          <Text style={styles.columns}>{item.phoneNumber}</Text>
                         </View>
-                        <View style={styles.columns}>
-                          <Text style={styles.columnData}>
+                        <View style={styles.columnData}>
+                          <Text style={styles.columns}>
                             {item.numberOfGuests}
                           </Text>
                         </View>
-                        <View style={styles.columns}>
-                          <Text style={styles.columnData}>
-                            {item.preferSharing ? "Sharing" : "No"}
+                        <View style={styles.columnData}>
+                          <Text style={styles.columns}>
+                            {item.preferSharing ? "Yes" : "-"}
                           </Text>
                         </View>
-                        <View style={styles.columns}>
+                        <View style={styles.columnData}>
                           <View
                             style={[
                               styles.statusContainer,
@@ -481,18 +490,20 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                             </View>
                           </View>
                         </View>
-                        <View style={styles.columns}>
-                          <Text style={styles.columnData}>
+                        <View style={styles.columnData}>
+                          <Text style={styles.columns}>
                             {format(parseISO(item.entryTime), "hh:mm a")}
                           </Text>
                         </View>
-                        <View style={styles.columns}>
-                          <Text style={styles.columnData}>
+                        <View style={styles.columnData}>
+                          <Text style={styles.columns}>
                             {item.waitingTime ?? "00:00"}
                           </Text>
                         </View>
 
-                        <View style={styles.columns}>
+                        <View
+                          style={[styles.columnData, { alignItems: "center" }]}
+                        >
                           {role === UserRolesTypes.TableManager && (
                             <>
                               {item.status === StatusEnum.Waiting && (
@@ -590,10 +601,12 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                             </>
                           )}
                         </View>
-                        <View style={styles.columns}>
+                        <View
+                          style={[styles.columnData, { alignItems: "center" }]}
+                        >
                           {role !== UserRolesTypes.TableManager && (
                             <TouchableOpacity
-                              style={styles.callButton}
+                              style={styles.callButtonTablet}
                               onPress={() => handleCall(item.phoneNumber)}
                             >
                               <Ionicons
@@ -606,7 +619,9 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                             </TouchableOpacity>
                           )}
                         </View>
-                        <View style={styles.columns}>
+                        <View
+                          style={[styles.columnData, { alignItems: "center" }]}
+                        >
                           {role !== UserRolesTypes.TableManager &&
                             item.status !== StatusEnum.Seated && (
                               <TouchableOpacity
@@ -681,6 +696,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     zIndex: 100,
   },
+  tokenContainer: {
+    justifyContent: "center",
+    flexDirection: "row",
+    width: 50,
+    alignItems: "center",
+    backgroundColor: "#007AFF",
+    borderTopEndRadius: 8,
+    borderBottomEndRadius: 8,
+  },
+  tokenText: {
+    fontSize: 16,
+    fontFamily: getFontFamily("bold"),
+    color: "#fff",
+  },
   guestDetails: {
     flex: 1,
     flexDirection: "column",
@@ -692,9 +721,6 @@ const styles = StyleSheet.create({
   },
   guestContainer: {
     flexDirection: "row",
-    alignItems: "center",
-  },
-  numberCircle: {
     alignItems: "center",
   },
   statusContainer: {
@@ -771,20 +797,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
 
-  tokenContainer: {
-    justifyContent: "center",
-    flexDirection: "row",
-    width: 50,
-    alignItems: "center",
-    backgroundColor: "#007AFF",
-    borderTopEndRadius: 8,
-    borderBottomEndRadius: 8,
-  },
-  tokenText: {
-    fontSize: 16,
-    fontFamily: getFontFamily("bold"),
-    color: "#fff",
-  },
   guestNameContainer: {
     flexDirection: "column",
     alignItems: "flex-start",
@@ -828,6 +840,9 @@ const styles = StyleSheet.create({
     color: "#666",
     marginLeft: 2,
     fontFamily: getFontFamily("bold"),
+  },
+  numberCircle: {
+    alignItems: "center",
   },
   inLineGuestText: {
     color: "#FFF",
@@ -917,46 +932,66 @@ const styles = StyleSheet.create({
   },
 
   // Table UI > Tablet
-  tableContainer: {
-    flex: 1,
-    padding: 16,
-  },
 
   tableHeader: {
     flexDirection: "row",
+    position: "sticky",
+    top: 0,
     borderBottomWidth: 1,
     borderBottomColor: "#e5e5e5",
+    color: "#000",
+    borderTopRightRadius: 8,
+    borderTopLeftRadius: 8,
+    backgroundColor: "#fff",
   },
 
   columnHeader: {
-    paddingHorizontal: 16,
-    color: "#737373",
-    paddingVertical: 16,
+    flex: 1,
+    paddingVertical: 25,
+    paddingHorizontal: 10,
     fontSize: 16,
     fontFamily: getFontFamily("medium"),
-    flex: 1,
+    color: "#737373",
     verticalAlign: "middle",
+    borderRightWidth: 1,
+    borderColor: "#eee",
   },
 
-  tableRow: {
+  tableContainer: {
     flex: 1,
+    borderBottomRightRadius: 8,
+    borderBottomLeftRadius: 8,
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
+    backgroundColor: "#fff",
+  },
+  columnRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    textAlign: "left",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e5e5",
+    borderColor: "#eee",
   },
-  columns: {
-    justifyContent: "center",
-    padding: 16,
-    verticalAlign: "middle",
-  },
+
   columnData: {
     flex: 1,
+    borderRightWidth: 1,
+    borderColor: "#eee",
+    paddingVertical: 16,
+    paddingHorizontal: 10,
     verticalAlign: "middle",
-    textAlign: "left",
-    fontFamily: getFontFamily("medium"),
+    justifyContent: "center",
+    alignItems: "flex-start",
+  },
+  columns: {
     fontSize: 16,
+    fontFamily: getFontFamily("medium"),
+    textAlign: "left",
+  },
+  callButtonTablet: {
+    backgroundColor: "#F44336",
+    borderRadius: 24,
+    padding: 10,
+    elevation: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

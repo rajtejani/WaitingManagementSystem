@@ -63,45 +63,65 @@ const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
     const statusColor = getStatusColor(item.status);
     const statusIcon = getStatusIcon(item.status);
     return (
-      <View style={styles.guestItem}>
-        <View style={styles.guestInfo}>
-          <Text style={styles.guestName}>{item.name}</Text>
-          <Text style={styles.guestPhone}>{item.phoneNumber}</Text>
-          <View style={styles.detailsRow}>
-            <Text style={styles.numberOfGuests}>
-              No. of guests: {item.numberOfGuests}
+      <>
+        <View style={styles.guestItem}>
+          <View style={styles.tokenContainer}>
+            <Text style={styles.tokenText}>
+              {item.tokenIndex?.toString()?.padStart(3, "0")}
             </Text>
-            {item.entryTime && (
-              <Text style={styles.timeText}>
-                {format(parseISO(item.entryTime), "MMM d, h:mm a")}
-              </Text>
-            )}
+          </View>
+          <View style={styles.guestDetails}>
+            <View style={styles.guestInfo}>
+              <View>
+                <Text style={styles.guestName}>{item.name}</Text>
+                <Text style={styles.guestPhone}>{item.phoneNumber}</Text>
+              </View>
+
+              <View
+                style={[
+                  styles.statusContainer,
+                  { backgroundColor: `${statusColor}20` },
+                ]}
+              >
+                <MaterialIcons
+                  name={statusIcon}
+                  size={14}
+                  color={statusColor}
+                />
+                <Text style={[styles.statusText, { color: statusColor }]}>
+                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.content}>
+              <View style={styles.detailsRow}>
+                <Text style={styles.numberOfGuests}>
+                  No. of guests: {item.numberOfGuests}
+                </Text>
+              </View>
+              {item.entryTime && (
+                <Text style={styles.timeText}>
+                  {format(parseISO(item.entryTime), "MMM d, h:mm a")}
+                </Text>
+              )}
+            </View>
           </View>
         </View>
-        <View
-          style={[
-            styles.statusContainer,
-            { backgroundColor: `${statusColor}20` },
-          ]}
-        >
-          <MaterialIcons name={statusIcon} size={14} color={statusColor} />
-          <Text style={[styles.statusText, { color: statusColor }]}>
-            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-          </Text>
-        </View>
-      </View>
+      </>
     );
   };
   return (
     <View style={styles.container}>
       {filteredGuests.length > 0 ? (
-        <FlatList
-          data={filteredGuests}
-          keyExtractor={(item) => item._id}
-          horizontal={false}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-        />
+        <>
+          <FlatList
+            data={filteredGuests}
+            keyExtractor={(item) => item._id}
+            horizontal={false}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+          />
+        </>
       ) : (
         <View style={styles.emptyStateContainer}>
           <MaterialIcons name="history" size={64} color="#DDD" />
@@ -122,20 +142,38 @@ const styles = StyleSheet.create({
   listContent: {
     gap: 10,
   },
-
   guestItem: {
     boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
     flexDirection: "row",
-    padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 8,
     justifyContent: "space-between",
     alignItems: "center",
   },
-  guestInfo: {
+  tokenContainer: {
+    justifyContent: "center",
+    flexDirection: "row",
+    width: 50,
+    height: 100,
+    alignItems: "center",
+    backgroundColor: "#007AFF",
+    borderTopEndRadius: 8,
+    borderBottomEndRadius: 8,
+  },
+  tokenText: {
+    fontSize: 16,
+    fontFamily: getFontFamily("bold"),
+    color: "#fff",
+  },
+  guestDetails: {
     flex: 1,
-    width: "100%",
-    // maxWidth: 250,
+    flexDirection: "column",
+    paddingHorizontal: 16,
+  },
+  guestInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   guestName: {
     fontSize: 16,
@@ -148,24 +186,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontFamily: getFontFamily("normal"),
   },
-  detailsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingRight: 16,
-  },
-  numberOfGuests: {
-    width: "100%",
-    fontSize: 13,
-    fontFamily: getFontFamily("normal"),
-    color: "#666",
-  },
-
-  timeText: {
-    fontSize: 12,
-    color: "#999",
-    fontFamily: getFontFamily("medium"),
-  },
   statusContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -176,6 +196,26 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     marginLeft: 3,
+    fontFamily: getFontFamily("medium"),
+  },
+  content: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  detailsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingRight: 16,
+  },
+  numberOfGuests: {
+    fontSize: 13,
+    fontFamily: getFontFamily("normal"),
+    color: "#666",
+  },
+  timeText: {
+    fontSize: 12,
+    color: "#999",
     fontFamily: getFontFamily("medium"),
   },
   emptyStateContainer: {
