@@ -67,7 +67,6 @@ const AddGuestScreen = (props: any) => {
       if (error) {
         console.log("Failed to load the sound", error);
       }
-      console.log("duration in seconds: " + newGuestSound.getDuration());
     }
   );
 
@@ -103,9 +102,9 @@ const AddGuestScreen = (props: any) => {
     setNumberOfGuest("");
     setNumberOfGuests(null);
     setWillingToShare(false);
-    setWaitingTime(null);
-    setHours(null);
-    setMinutes(null);
+    setWaitingTime("");
+    setHours("");
+    setMinutes("");
   };
 
   const handleAddGuest = async () => {
@@ -166,7 +165,7 @@ const AddGuestScreen = (props: any) => {
           });
           console.log(" *-*-*-*-* ", response.data);
           const assignToken = (guests: Guest[]) => {
-            return guests.map((guest, index) => ({
+            return guests.map((guest: Guest, index: number) => ({
               ...guest,
               tokenIndex: index + 1,
             }));
@@ -227,7 +226,11 @@ const AddGuestScreen = (props: any) => {
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Guest Name</Text>
                   <TextInput
-                    style={[styles.input, nameError ? styles.inputError : null]}
+                    style={[
+                      styles.input,
+                      nameError ? styles.inputError : null,
+                      { fontFamily: getFontFamily("normal") },
+                    ]}
                     value={userName}
                     onChangeText={setUserName}
                     placeholder="Enter guest name"
@@ -244,6 +247,7 @@ const AddGuestScreen = (props: any) => {
                     style={[
                       styles.input,
                       phoneError ? styles.inputError : null,
+                      { fontFamily: getFontFamily("normal") },
                     ]}
                     value={phoneNumber}
                     onChangeText={handlePhoneChange}
@@ -374,7 +378,10 @@ const AddGuestScreen = (props: any) => {
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Number of Guests</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      { fontFamily: getFontFamily("normal") },
+                    ]}
                     value={numberOfGuest}
                     onChangeText={(text) => {
                       setNumberOfGuest(text);
@@ -543,7 +550,7 @@ const styles = StyleSheet.create({
   numberOfGuestsButtonTextActive: {
     color: "#FFF",
     fontWeight: "600",
-    fontFamily: getFontFamily("semibold"),
+    fontFamily: getFontFamily("normal"),
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -585,7 +592,8 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#FFF",
     fontSize: 20,
-    fontFamily: getFontFamily("semibold"),
+    fontWeight: 600,
+    fontFamily: getFontFamily("normal"),
     marginLeft: 10,
   },
 

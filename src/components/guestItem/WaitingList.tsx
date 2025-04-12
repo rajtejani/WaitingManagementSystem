@@ -91,13 +91,14 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
       console.log(" >>>> response of status changes", response);
       // Update the AppContext state on success
       setTodaysGuest((prevGuests) => {
-        return prevGuests.map((guest) => {
+        return prevGuests.map((guest: Guest) => {
           if (guest._id === id) {
             return { ...guest, status: newStatus };
           }
           return guest;
         });
       });
+      console.log("get Today guest=====>", setTodaysGuest);
     } catch (error) {
       setError((error as Error).message);
     }
@@ -188,11 +189,11 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
     return (
       <>
         <View style={[styles.guestItem]} key={item._id}>
-          <View style={styles.tokenContainer}>
+          {/* <View style={styles.tokenContainer}>
             <Text style={styles.tokenText}>
               {item.tokenIndex?.toString()?.padStart(3, "0")}
             </Text>
-          </View>
+          </View> */}
           <View style={styles.guestDetails}>
             <View style={styles.guestInfoContainer}>
               <View style={styles.guestContainer}>
@@ -402,7 +403,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
               {isTablet ? (
                 <>
                   <View style={styles.tableHeader}>
-                    <Text style={styles.columnHeader}>No.</Text>
+                    {/* <Text style={styles.columnHeader}>No.</Text> */}
                     <Text style={styles.columnHeader}>Name</Text>
                     <Text style={styles.columnHeader}>Phone</Text>
                     <Text style={styles.columnHeader}>Guests</Text>
@@ -410,32 +411,30 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                     <Text style={styles.columnHeader}>Status</Text>
                     <Text style={styles.columnHeader}>Entry Time</Text>
                     <Text style={styles.columnHeader}>Wait Time</Text>
-                    <Text
-                      style={[styles.columnHeader, { borderRightWidth: 0 }]}
-                    >
-                      {" "}
-                    </Text>
+                    <Text style={styles.columnHeader}></Text>
                     <Text
                       style={[
                         styles.columnHeader,
                         {
                           textAlign: "center",
-                          borderRightWidth: 0,
+                          borderLeftWidth: 0,
                         },
                       ]}
                     >
                       Actions
                     </Text>
-                    <Text style={styles.columnHeader}> </Text>
+                    <Text
+                      style={[styles.columnHeader, { borderLeftWidth: 0 }]}
+                    ></Text>
                   </View>
                   <ScrollView style={styles.tableContainer}>
                     {filteredGuests?.map((item: Guest) => (
                       <View key={item._id} style={[styles.columnRow]}>
-                        <View style={styles.columnData}>
+                        {/* <View style={styles.columnData}>
                           <Text style={styles.columns}>
                             {item.tokenIndex?.toString()?.padStart(3, "0")}
                           </Text>
-                        </View>
+                        </View> */}
                         <View style={styles.columnData}>
                           <Text style={styles.columns}>{item.name}</Text>
                         </View>
@@ -502,7 +501,10 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                         </View>
 
                         <View
-                          style={[styles.columnData, { alignItems: "center" }]}
+                          style={[
+                            styles.columnData,
+                            { alignItems: "center", borderRightWidth: 0 },
+                          ]}
                         >
                           {role === UserRolesTypes.TableManager && (
                             <>
@@ -602,7 +604,10 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                           )}
                         </View>
                         <View
-                          style={[styles.columnData, { alignItems: "center" }]}
+                          style={[
+                            styles.columnData,
+                            { alignItems: "center", borderRightWidth: 0 },
+                          ]}
                         >
                           {role !== UserRolesTypes.TableManager && (
                             <TouchableOpacity
@@ -724,13 +729,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statusContainer: {
-    position: "relative",
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 3,
     paddingHorizontal: 7,
     borderRadius: 20,
     borderWidth: 1,
+    width: "auto",
   },
   innerCircle: {
     shadowColor: "#000",
@@ -759,7 +764,7 @@ const styles = StyleSheet.create({
 
   statusText: {
     fontSize: 12,
-    marginLeft: 3,
+    paddingLeft: 3,
     fontFamily: getFontFamily("bold"),
   },
   completeButton: (bgColor: string) => ({
@@ -815,7 +820,9 @@ const styles = StyleSheet.create({
     fontFamily: getFontFamily("normal"),
   },
   guestPhone: {
-    fontFamily: getFontFamily("semibold"),
+    fontWeight: 600,
+
+    fontFamily: getFontFamily("normal"),
     fontSize: 14,
     color: "#666",
     marginBottom: 8,
@@ -953,7 +960,7 @@ const styles = StyleSheet.create({
     fontFamily: getFontFamily("medium"),
     color: "#737373",
     verticalAlign: "middle",
-    borderRightWidth: 1,
+    borderLeftWidth: 1,
     borderColor: "#eee",
   },
 
@@ -972,13 +979,13 @@ const styles = StyleSheet.create({
 
   columnData: {
     flex: 1,
-    borderRightWidth: 1,
-    borderColor: "#eee",
-    paddingVertical: 16,
-    paddingHorizontal: 10,
     verticalAlign: "middle",
     justifyContent: "center",
     alignItems: "flex-start",
+    borderRightWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    borderColor: "#eee",
   },
   columns: {
     fontSize: 16,

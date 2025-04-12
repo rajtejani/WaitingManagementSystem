@@ -1,17 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { FlatList } from "react-native-gesture-handler";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
 import { getFontFamily } from "../constants/fontFamily";
 import { Guest } from "../types/UserInterface";
-import { StatusEnum } from "../utils/enums";
 
 const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [guestList, setGuestList] = useState<Guest[]>([]);
+
+  const deviceWidth = Dimensions.get("window").width;
+  const isTablet = deviceWidth >= 1000;
   const handleDateSelected = async (date: Date) => {
     setSelectedDate(date);
     const dateString = date.toISOString().split("T")[0];
@@ -106,13 +115,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    // padding: 16,
     paddingHorizontal: 16,
     paddingTop: 16,
   },
   title: {
     fontSize: 40,
-    fontFamily: getFontFamily("semibold"),
+    fontWeight: 600,
+    fontFamily: getFontFamily("normal"),
   },
   datePickerButton: {
     flexDirection: "row",
@@ -153,7 +162,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     marginBottom: 12,
-    fontFamily: getFontFamily("semibold"),
+    fontFamily: getFontFamily("bold"),
   },
   guestListContainer: {
     flex: 1,

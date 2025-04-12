@@ -13,6 +13,10 @@ export function loginAPI(payload: { username: string; password: string }) {
       return response;
     })
     .catch((error) => {
+      Toast.show({
+        type: "error",
+        text1: "Invalid username or password",
+      });
       throw error;
     });
 }

@@ -1,6 +1,13 @@
 import { format, parseISO } from "date-fns";
 import React, { useMemo } from "react";
-import { Dimensions, FlatList, StyleSheet, Text, View } from "react-native";
+import {
+  Dimensions,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getFontFamily } from "../../constants/fontFamily";
 import { useAppContext } from "../../context/AppContext";
@@ -13,7 +20,7 @@ const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
   const { todaysGuest } = useAppContext();
   // Get the device width
   const deviceWidth = Dimensions.get("window").width;
-  const isTablet = deviceWidth <= 1000;
+  const isTablet = deviceWidth >= 1000;
 
   const sortedGuests = useMemo(() => {
     let guestList = todaysGuest;
@@ -65,11 +72,11 @@ const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
     return (
       <>
         <View style={styles.guestItem}>
-          <View style={styles.tokenContainer}>
+          {/* <View style={styles.tokenContainer}>
             <Text style={styles.tokenText}>
               {item.tokenIndex?.toString()?.padStart(3, "0")}
             </Text>
-          </View>
+          </View> */}
           <View style={styles.guestDetails}>
             <View style={styles.guestInfo}>
               <View>
@@ -114,13 +121,83 @@ const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
     <View style={styles.container}>
       {filteredGuests.length > 0 ? (
         <>
-          <FlatList
-            data={filteredGuests}
-            keyExtractor={(item) => item._id}
-            horizontal={false}
-            renderItem={renderItem}
-            contentContainerStyle={styles.listContent}
-          />
+          {isTablet ? (
+            <>
+              <View style={styles.tableHeader}>
+                {/* <Text style={styles.columnHeader}>Token</Text> */}
+                <Text style={styles.columnHeader}>Guest Name</Text>
+                <Text style={styles.columnHeader}>Guest Phone</Text>
+                <Text style={styles.columnHeader}>No. of Guests</Text>
+                <Text style={styles.columnHeader}>Entry Time</Text>
+                <Text style={[styles.columnHeader, { textAlign: "center" }]}>
+                  Status
+                </Text>
+              </View>
+              <ScrollView style={styles.tableContainer}>
+                {filteredGuests.map((item: Guest) => (
+                  <View key={item._id} style={styles.columnRow}>
+                    {/* <View style={styles.columnData}>
+                      <Text style={styles.columns}>
+                        {item.tokenIndex?.toString()?.padStart(3, "0")}
+                      </Text>
+                    </View> */}
+                    <View style={styles.columnData}>
+                      <Text style={styles.columns}>{item.name}</Text>
+                    </View>
+                    <View style={styles.columnData}>
+                      <Text style={styles.columns}>{item.phoneNumber}</Text>
+                    </View>
+                    <View style={styles.columnData}>
+                      <Text style={styles.columns}>
+                        {item.numberOfGuests?.toString()}
+                      </Text>
+                    </View>
+                    <View style={styles.columnData}>
+                      <Text style={styles.columns}>
+                        {item.entryTime &&
+                          format(parseISO(item.entryTime), "MMM d, h:mm a")}
+                      </Text>
+                    </View>
+                    <View style={[styles.columnData, { alignItems: "center" }]}>
+                      <View
+                        style={[
+                          styles.statusContainer,
+                          {
+                            backgroundColor: `${getStatusColor(item.status)}20`,
+                          },
+                        ]}
+                      >
+                        <MaterialIcons
+                          name={getStatusIcon(item.status)}
+                          size={14}
+                          color={getStatusColor(item.status)}
+                        />
+                        <Text
+                          style={[
+                            styles.statusText,
+                            { color: getStatusColor(item.status) },
+                          ]}
+                        >
+                          {item.status.charAt(0).toUpperCase() +
+                            item.status.slice(1)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </>
+          ) : (
+            <>
+              <FlatList
+                data={filteredGuests}
+                keyExtractor={(item) => item._id}
+                horizontal={false}
+                renderItem={renderItem}
+                contentContainerStyle={styles.listContent}
+              />
+            </>
+          )}
         </>
       ) : (
         <View style={styles.emptyStateContainer}>
@@ -147,6 +224,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     backgroundColor: "#FFF",
     borderRadius: 8,
+    padding: 16,
     justifyContent: "space-between",
     alignItems: "center",
   },
@@ -168,7 +246,7 @@ const styles = StyleSheet.create({
   guestDetails: {
     flex: 1,
     flexDirection: "column",
-    paddingHorizontal: 16,
+    // paddingHorizontal: 16,
   },
   guestInfo: {
     flexDirection: "row",
@@ -178,7 +256,8 @@ const styles = StyleSheet.create({
   guestName: {
     fontSize: 16,
     marginBottom: 4,
-    fontFamily: getFontFamily("semibold"),
+    fontWeight: 600,
+    fontFamily: getFontFamily("normal"),
   },
   guestPhone: {
     fontSize: 14,
@@ -234,6 +313,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     fontFamily: getFontFamily("normal"),
+  },
+
+  // Table UI > Tablet
+
+  tableHeader: {
+    flexDirection: "row",
+    position: "sticky",
+    top: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e5e5",
+    color: "#000",
+    borderTopRightRadius: 8,
+    borderTopLeftRadius: 8,
+    backgroundColor: "#fff",
+  },
+
+  columnHeader: {
+    flex: 1,
+    paddingVertical: 25,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    fontFamily: getFontFamily("medium"),
+    color: "#737373",
+    verticalAlign: "middle",
+    // borderLeftWidth: 1,
+    borderColor: "#eee",
+  },
+
+  tableContainer: {
+    flex: 1,
+    borderBottomRightRadius: 8,
+    borderBottomLeftRadius: 8,
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
+    backgroundColor: "#fff",
+  },
+  columnRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+
+  columnData: {
+    flex: 1,
+    verticalAlign: "middle",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    // borderRightWidth: 1,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    borderColor: "#eee",
+  },
+  columns: {
+    fontSize: 16,
+    fontFamily: getFontFamily("medium"),
+    textAlign: "left",
   },
 });
 

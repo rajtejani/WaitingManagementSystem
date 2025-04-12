@@ -12,13 +12,11 @@ import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
-import Toast from "react-native-toast-message";
 import MaterialIcons from "react-native-vector-icons/Feather";
 import { loginAPI } from "../apis/auth";
 import { getFontFamily } from "../constants/fontFamily";
 import { AppContext } from "../context/AppContext";
 const LogInScreen = () => {
-  // TODO: REMOVE static username and password
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loadingError, setLoginError] = useState("");
@@ -183,6 +181,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#000",
+    color: "#000",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -206,6 +205,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: "#fff",
     fontFamily: getFontFamily("normal"),
+    color: "#000",
   },
   buttonContainer: {
     flexDirection: "column",
@@ -226,7 +226,8 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#FFF",
     fontSize: 20,
-    fontFamily: getFontFamily("semibold"),
+    fontWeight: 600,
+    fontFamily: getFontFamily("normal"),
   },
   errorText: {
     color: "red",

@@ -15,28 +15,34 @@ const Badge = ({
   const formattedCount = count > maxCount ? `${maxCount}+` : count.toString();
 
   // Calculate width based on count length (for proper sizing)
-  const width =
-    formattedCount.length > 1 ? 24 + (formattedCount.length - 2) * 8 : 20;
-
   return (
-    <View style={[styles.badge, { backgroundColor: color, width }, style]}>
-      <Text style={[styles.text, { color: textColor }]}>{formattedCount}</Text>
+    <View style={[styles.badge, { backgroundColor: color }, style]}>
+      <Text
+        style={[styles.text, { color: textColor }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {formattedCount}
+      </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   badge: {
-    height: 20,
     minWidth: 20,
-    borderRadius: 10,
+    minHeight: 20,
+    borderRadius: 20,
+    paddingHorizontal: 6,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 4,
+    maxWidth: 40,
+    maxHeight: 40,
   },
   text: {
     fontSize: 12,
     fontFamily: getFontFamily("bold"),
+    textAlign: "center",
   },
 });
 

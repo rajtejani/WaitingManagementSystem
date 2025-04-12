@@ -190,13 +190,6 @@ export const AppProvider: React.FC<{
         if (event.eventName === "update_guest") {
           const guest = data.guest;
           console.log(" >>>> data ", data);
-          statusChangeSound.play((success: any) => {
-            if (success) {
-              console.log("successfully finished playing");
-            } else {
-              console.log("playback failed due to audio decoding errors");
-            }
-          });
           setTodaysGuest((prev) => {
             return prev.map((currGuest) => {
               if (currGuest._id === guest._id) {
@@ -205,6 +198,13 @@ export const AppProvider: React.FC<{
 
               return currGuest;
             });
+          });
+          statusChangeSound.play((success: any) => {
+            if (success) {
+              console.log("successfully finished playing");
+            } else {
+              console.log("playback failed due to audio decoding errors");
+            }
           });
         }
         if (event.eventName === "new_guest") {

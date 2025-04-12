@@ -93,11 +93,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     backgroundColor: "#fff",
+    fontFamily: getFontFamily("medium"),
   },
   inputText: {
     fontSize: 16,
     fontFamily: getFontFamily("medium"),
     color: "#888",
+  },
+  datePicker: {
+    fontFamily: getFontFamily("medium"),
   },
 });
 

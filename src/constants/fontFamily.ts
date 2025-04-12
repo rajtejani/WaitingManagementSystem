@@ -5,17 +5,17 @@ const isIOS = () => {
 };
 
 const fontFamilies = {
-  ROBOTO: {
-    normal: isIOS() ? "Roboto-Regular" : "RobotoRegular",
-    medium: isIOS() ? "Roboto-Medium" : "RobotoMedium",
-    semibold: isIOS() ? "Roboto-SemiBold" : "RobotoSemiBold",
-    bold: isIOS() ? "Roboto-Bold" : "RobotoBold",
+  Ubuntu: {
+    normal: isIOS() ? "Ubuntu-Regular" : "UbuntuRegular",
+    medium: isIOS() ? "Ubuntu-Medium" : "UbuntuMedium",
+    light: isIOS() ? "Ubuntu-Light" : "UbuntuLight",
+    bold: isIOS() ? "Ubuntu-Bold" : "UbuntuBold",
   },
 };
 
 export const getFontFamily = (
-  weight: "normal" | "medium" | "semibold" | "bold"
+  weight: "normal" | "medium" | "light" | "bold"
 ) => {
-  const selectedFontFamily = fontFamilies.ROBOTO;
+  const selectedFontFamily = fontFamilies.Ubuntu;
   return selectedFontFamily[weight];
 };
