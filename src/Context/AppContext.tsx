@@ -15,7 +15,6 @@ import { getTodaysGuestAPI } from "../apis/guest";
 import apiInstance from "../config/axios";
 import pusher from "../services/pusher.service";
 import { Guest, User } from "../types/UserInterface";
-const Sound = require("react-native-sound");
 
 interface AppContextType {
   user?: User;
@@ -40,16 +39,6 @@ interface AppContextType {
   setGuestHistory: Dispatch<SetStateAction<Guest[]>>;
   error?: string;
 }
-
-const statusChangeSound = new Sound(
-  "notification_alert.mp3",
-  Sound.MAIN_BUNDLE,
-  (error: any) => {
-    if (error) {
-      console.log("Failed to load the sound", error);
-    }
-  }
-);
 
 export const AppContext = createContext<AppContextType>({
   user: undefined,
@@ -163,15 +152,15 @@ export const AppProvider: React.FC<{
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: true }));
       const response = await getTodaysGuestAPI();
       console.log(" >>>> response get today guest api ", response);
-      const guestsWithIndex = response.data.guests.map(
-        (guest: Guest[], index: number) => ({
-          ...guest,
-          tokenIndex: index + 1,
-        })
-      );
+      // const guestsWithIndex = response.data.guests.map(
+      //   (guest: Guest[], index: number) => ({
+      //     ...guest,
+      //     tokenIndex: index + 1,
+      //   })
+      // );
       setLoaders((prev) => ({ ...prev, isTodaysGuestLoading: false }));
       if (response.status === 200) {
-        setTodaysGuest(guestsWithIndex);
+        setTodaysGuest(response.data.guests);
       }
     } catch (error) {
       setError((error as Error).message);
@@ -198,13 +187,6 @@ export const AppProvider: React.FC<{
 
               return currGuest;
             });
-          });
-          statusChangeSound.play((success: any) => {
-            if (success) {
-              console.log("successfully finished playing");
-            } else {
-              console.log("playback failed due to audio decoding errors");
-            }
           });
         }
         if (event.eventName === "new_guest") {

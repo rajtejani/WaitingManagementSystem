@@ -227,6 +227,7 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 10,
   },
   tokenContainer: {
     justifyContent: "center",

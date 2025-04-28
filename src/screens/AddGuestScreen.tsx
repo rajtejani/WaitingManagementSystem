@@ -108,6 +108,7 @@ const AddGuestScreen = (props: any) => {
   };
 
   const handleAddGuest = async () => {
+    if (isLoading) return;
     hapticPress();
 
     let isValid = true;
@@ -446,6 +447,7 @@ const AddGuestScreen = (props: any) => {
                   <TouchableOpacity
                     style={styles.addButton}
                     onPress={handleAddGuest}
+                    disabled={isLoading}
                   >
                     {isLoading && (
                       <ActivityIndicator color={"#FFF"} size={20} />

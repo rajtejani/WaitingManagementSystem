@@ -49,6 +49,7 @@ const LogInScreen = () => {
     setShowPassword(!showPassword);
   };
   const handleAddGuest = async () => {
+    if (isLoading) return;
     RNHapticFeedback.trigger("soft", defaultOptions);
 
     let error = false;
@@ -127,9 +128,9 @@ const LogInScreen = () => {
           </View>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              disabled={isLoading}
               style={styles.addButton}
               onPress={handleAddGuest}
+              disabled={isLoading}
             >
               {isLoading && <ActivityIndicator color={"#FFF"} size={20} />}
               <Text style={styles.addButtonText}>Submit</Text>

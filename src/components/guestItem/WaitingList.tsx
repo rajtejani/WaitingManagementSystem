@@ -27,6 +27,7 @@ import { getFontFamily } from "../../constants/fontFamily";
 import { useAppContext } from "../../context/AppContext";
 import { Guest } from "../../types/UserInterface";
 import { StatusEnum, UserRolesTypes } from "../../utils/enums";
+const Sound = require("react-native-sound");
 
 interface WaitingListProps {
   searchQuery: string;
@@ -48,6 +49,15 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
   const deviceWidth = Dimensions.get("window").width;
   const isTablet = deviceWidth >= 1000;
 
+  const statusChangeSound = new Sound(
+    "notification_alert.mp3",
+    Sound.MAIN_BUNDLE,
+    (error: any) => {
+      if (error) {
+        console.log("Failed to load the sound", error);
+      }
+    }
+  );
   const defaultOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
@@ -84,21 +94,27 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
     }
   };
   const handleStatusChange = async (id: string, newStatus: StatusEnum) => {
+    if (loadingIds.includes(id)) return;
     hapticPress();
-
     try {
       const response = await updateGuestStatusAPI(id, newStatus);
       console.log(" >>>> response of status changes", response);
       // Update the AppContext state on success
       setTodaysGuest((prevGuests) => {
-        return prevGuests.map((guest: Guest) => {
+        return prevGuests.map((guest) => {
           if (guest._id === id) {
             return { ...guest, status: newStatus };
           }
           return guest;
         });
       });
-      console.log("get Today guest=====>", setTodaysGuest);
+      statusChangeSound.play((success: any) => {
+        if (success) {
+          console.log("successfully finished playing");
+        } else {
+          console.log("playback failed due to audio decoding errors");
+        }
+      });
     } catch (error) {
       setError((error as Error).message);
     }
@@ -131,6 +147,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
       });
   };
   const handleCancel = (id: string) => {
+    if (loadingIds.includes(id)) return;
     Alert.alert(
       "Cancel Waiting",
       "Are you sure you want to cancel this guest?",
@@ -140,7 +157,8 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
           text: "Yes",
           style: "destructive",
           onPress: () => {
-            handleStatusChange(id, StatusEnum.Cancelled), hapticPress();
+            handleStatusChange(id, StatusEnum.Cancelled);
+            hapticPress();
           },
         },
       ]
@@ -285,6 +303,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                       <TouchableOpacity
                         style={styles.callButton}
                         onPress={() => handleCancel(item._id)}
+                        disabled={loadingIds.includes(item._id)}
                       >
                         {loadingIds.includes(item._id) ? (
                           <ActivityIndicator size={20} color="#FFF" />
@@ -308,6 +327,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                           onPress={() =>
                             handleStatusChange(item._id, StatusEnum.TableReady)
                           }
+                          disabled={loadingIds.includes(item._id)}
                         >
                           {loadingIds.includes(item._id) && (
                             <ActivityIndicator size={20} color="#FFF" />
@@ -323,6 +343,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                           onPress={() =>
                             handleStatusChange(item._id, StatusEnum.Seated)
                           }
+                          disabled={loadingIds.includes(item._id)}
                         >
                           {loadingIds.includes(item._id) && (
                             <ActivityIndicator size={20} color="#FFF" />
@@ -334,38 +355,38 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                   )}
                   {role !== UserRolesTypes.TableManager && (
                     <>
-                      <>
-                        {item.status === StatusEnum.TableReady && (
-                          <TouchableOpacity
-                            style={styles.completeButton(
-                              getStatusColor(StatusEnum.InLine)
-                            )}
-                            onPress={() =>
-                              handleStatusChange(item._id, StatusEnum.InLine)
-                            }
-                          >
-                            {loadingIds.includes(item._id) && (
-                              <ActivityIndicator size={20} color="#FFF" />
-                            )}
-                            <Text style={styles.completeText}>In Line</Text>
-                          </TouchableOpacity>
-                        )}
-                        {item.status === StatusEnum.InLine && (
-                          <TouchableOpacity
-                            style={styles.completeButton(
-                              getStatusColor(StatusEnum.Seated)
-                            )}
-                            onPress={() =>
-                              handleStatusChange(item._id, StatusEnum.Seated)
-                            }
-                          >
-                            {loadingIds.includes(item._id) && (
-                              <ActivityIndicator size={20} color="#FFF" />
-                            )}
-                            <Text style={styles.completeText}>Seated</Text>
-                          </TouchableOpacity>
-                        )}
-                      </>
+                      {item.status === StatusEnum.TableReady && (
+                        <TouchableOpacity
+                          style={styles.completeButton(
+                            getStatusColor(StatusEnum.InLine)
+                          )}
+                          onPress={() =>
+                            handleStatusChange(item._id, StatusEnum.InLine)
+                          }
+                          disabled={loadingIds.includes(item._id)}
+                        >
+                          {loadingIds.includes(item._id) && (
+                            <ActivityIndicator size={20} color="#FFF" />
+                          )}
+                          <Text style={styles.completeText}>In Line</Text>
+                        </TouchableOpacity>
+                      )}
+                      {item.status === StatusEnum.InLine && (
+                        <TouchableOpacity
+                          style={styles.completeButton(
+                            getStatusColor(StatusEnum.Seated)
+                          )}
+                          onPress={() =>
+                            handleStatusChange(item._id, StatusEnum.Seated)
+                          }
+                          disabled={loadingIds.includes(item._id)}
+                        >
+                          {loadingIds.includes(item._id) && (
+                            <ActivityIndicator size={20} color="#FFF" />
+                          )}
+                          <Text style={styles.completeText}>Seated</Text>
+                        </TouchableOpacity>
+                      )}
                     </>
                   )}
 
@@ -430,11 +451,6 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                   <ScrollView style={styles.tableContainer}>
                     {filteredGuests?.map((item: Guest) => (
                       <View key={item._id} style={[styles.columnRow]}>
-                        {/* <View style={styles.columnData}>
-                          <Text style={styles.columns}>
-                            {item.tokenIndex?.toString()?.padStart(3, "0")}
-                          </Text>
-                        </View> */}
                         <View style={styles.columnData}>
                           <Text style={styles.columns}>{item.name}</Text>
                         </View>
@@ -519,6 +535,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                                       StatusEnum.TableReady
                                     )
                                   }
+                                  disabled={loadingIds.includes(item._id)}
                                 >
                                   {loadingIds.includes(item._id) && (
                                     <ActivityIndicator size={20} color="#FFF" />
@@ -539,6 +556,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                                       StatusEnum.Seated
                                     )
                                   }
+                                  disabled={loadingIds.includes(item._id)}
                                 >
                                   {loadingIds.includes(item._id) && (
                                     <ActivityIndicator size={20} color="#FFF" />
@@ -564,6 +582,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                                         StatusEnum.InLine
                                       )
                                     }
+                                    disabled={loadingIds.includes(item._id)}
                                   >
                                     {loadingIds.includes(item._id) && (
                                       <ActivityIndicator
@@ -587,6 +606,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                                         StatusEnum.Seated
                                       )
                                     }
+                                    disabled={loadingIds.includes(item._id)}
                                   >
                                     {loadingIds.includes(item._id) && (
                                       <ActivityIndicator
@@ -632,6 +652,7 @@ const WaitingList: React.FC<WaitingListProps> = ({ searchQuery }) => {
                               <TouchableOpacity
                                 style={styles.callButton}
                                 onPress={() => handleCancel(item._id)}
+                                disabled={loadingIds.includes(item._id)}
                               >
                                 {loadingIds.includes(item._id) ? (
                                   <ActivityIndicator size={20} color="#FFF" />

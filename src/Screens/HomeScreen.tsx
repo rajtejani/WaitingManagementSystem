@@ -1,13 +1,21 @@
 import { useNavigation } from "@react-navigation/native";
 import { capitalize } from "lodash";
-import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import NativeHapticFeedback, {
   HapticFeedbackTypes,
   HapticOptions,
 } from "react-native-haptic-feedback";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { getTodaysGuestAPI } from "../apis/guest";
 import AnimatedSearchBar from "../components/AnimatedSearchBar";
 import Badge from "../components/Badge";
 import CompletedList from "../components/guestItem/CompletedList";
@@ -21,9 +29,10 @@ const HomeScreen = () => {
     "upcoming"
   );
   const navigation = useNavigation();
-  const { todaysGuest, role } = useAppContext();
+  const { todaysGuest, role, setTodaysGuest } = useAppContext();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const upcomingGuestsCount = todaysGuest?.filter(
     (guest) => ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
@@ -56,83 +65,108 @@ const HomeScreen = () => {
     hapticPress();
     navigation.navigate("Guest");
   };
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      const response = await getTodaysGuestAPI();
+      const freshGuests = response?.data?.guests ?? [];
+      setTodaysGuest(freshGuests);
+    } catch (error) {
+      console.error("Failed to refresh guest list:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>
-              {activeTab === "upcoming"
-                ? "Guest Waiting List"
-                : "Guest Completed List"}
-            </Text>
-            <Text style={styles.subTitle}>
-              {role
-                ?.split("_")
-                .map((word) => capitalize(word))
-                .join(" ")}
-            </Text>
-          </View>
-          <AnimatedSearchBar onSearch={setSearchQuery} />
-          {role !== UserRolesTypes.TableManager && (
-            <TouchableOpacity onPress={handleIconPress}>
-              <MaterialIcons name="add" size={28} color="#E73E1F" />
-            </TouchableOpacity>
-          )}
-        </View>
+      <FlatList
+        data={[]}
+        keyExtractor={(item) => item}
+        renderItem={null}
+        ListHeaderComponent={
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.title}>
+                  {activeTab === "upcoming"
+                    ? "Guest Waiting List"
+                    : "Guest Completed List"}
+                </Text>
+                <Text style={styles.subTitle}>
+                  {role
+                    ?.split("_")
+                    .map((word) => capitalize(word))
+                    .join(" ")}
+                </Text>
+              </View>
+              <AnimatedSearchBar onSearch={setSearchQuery} />
+              {role !== UserRolesTypes.TableManager && (
+                <TouchableOpacity onPress={handleIconPress}>
+                  <MaterialIcons name="add" size={28} color="#E73E1F" />
+                </TouchableOpacity>
+              )}
+            </View>
 
-        <View style={styles.tabContainer}>
-          {role !== UserRolesTypes.TableManager && (
-            <TouchableOpacity
-              style={[styles.tab, activeTab === "upcoming" && styles.activeTab]}
-              onPress={() => {
-                setActiveTab("upcoming");
-                hapticPress();
-              }}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "upcoming" && styles.activeTabText,
-                ]}
-              >
-                Upcoming
-              </Text>
-              <Badge count={upcomingGuestsCount} />
-            </TouchableOpacity>
-          )}
-          {role !== UserRolesTypes.TableManager && (
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                activeTab === "completed" && styles.activeTab,
-              ]}
-              onPress={() => {
-                hapticPress();
-                setActiveTab("completed");
-              }}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "completed" && styles.activeTabText,
-                ]}
-              >
-                Completed
-              </Text>
-              <Badge count={completedGuestsCount} />
-            </TouchableOpacity>
-          )}
-        </View>
-        <View style={styles.listContainer}>
-          {activeTab === "upcoming" ? (
-            <WaitingList searchQuery={searchQuery} />
-          ) : (
-            <CompletedList searchQuery={searchQuery} />
-          )}
-        </View>
-      </View>
+            <View style={styles.tabContainer}>
+              {role !== UserRolesTypes.TableManager && (
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    activeTab === "upcoming" && styles.activeTab,
+                  ]}
+                  onPress={() => {
+                    setActiveTab("upcoming");
+                    hapticPress();
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "upcoming" && styles.activeTabText,
+                    ]}
+                  >
+                    Upcoming
+                  </Text>
+                  <Badge count={upcomingGuestsCount} />
+                </TouchableOpacity>
+              )}
+              {role !== UserRolesTypes.TableManager && (
+                <TouchableOpacity
+                  style={[
+                    styles.tab,
+                    activeTab === "completed" && styles.activeTab,
+                  ]}
+                  onPress={() => {
+                    hapticPress();
+                    setActiveTab("completed");
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === "completed" && styles.activeTabText,
+                    ]}
+                  >
+                    Completed
+                  </Text>
+                  <Badge count={completedGuestsCount} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={styles.listContainer}>
+              {activeTab === "upcoming" ? (
+                <WaitingList searchQuery={searchQuery} />
+              ) : (
+                <CompletedList searchQuery={searchQuery} />
+              )}
+            </View>
+          </View>
+        }
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
     </SafeAreaView>
   );
 };
