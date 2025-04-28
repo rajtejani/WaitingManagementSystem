@@ -1,11 +1,8 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
-import NativeHapticFeedback, {
-  HapticFeedbackTypes,
-  HapticOptions,
-} from "react-native-haptic-feedback";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAppContext } from "../context/AppContext";
+import { useHaptic } from "../hooks/useHaptic";
 import HistoryScreen from "../screens/HistoryScreen";
 import HomeScreen from "../screens/HomeScreen";
 import { UserRolesTypes } from "../utils/enums";
@@ -13,27 +10,7 @@ const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
   const { role } = useAppContext();
-  const defaultOptions = {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  };
-  const RNHapticFeedback = {
-    trigger(
-      type:
-        | keyof typeof HapticFeedbackTypes
-        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
-      options: HapticOptions = {}
-    ) {
-      try {
-        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
-      } catch {
-        console.warn("RNReactNativeHapticFeedback is not available");
-      }
-    },
-  };
-  const hapticPress = () => {
-    RNHapticFeedback.trigger("soft", defaultOptions);
-  };
+  const { triggerHapticFeedback } = useHaptic();
 
   return (
     <>
@@ -64,7 +41,7 @@ const BottomTabNavigator = () => {
             }}
             listeners={{
               tabPress: (e) => {
-                hapticPress();
+                triggerHapticFeedback();
               },
             }}
           />
@@ -78,7 +55,7 @@ const BottomTabNavigator = () => {
             }}
             listeners={{
               tabPress: (e) => {
-                hapticPress();
+                triggerHapticFeedback();
               },
             }}
           />

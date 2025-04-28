@@ -1,5 +1,4 @@
 import MaterialIcons from "react-native-vector-icons/Feather";
-
 import { useNavigation } from "@react-navigation/native";
 import { uniqBy } from "lodash";
 import React, { useContext, useState } from "react";
@@ -13,18 +12,15 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import NativeHapticFeedback, {
-  HapticFeedbackTypes,
-  HapticOptions,
-} from "react-native-haptic-feedback";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import SelectDropdown from "react-native-select-dropdown";
 import Icon from "react-native-vector-icons/Feather";
 import { newGuestEntryAPI } from "../apis/guest";
+import { newGuestSound } from "../constants/files";
 import { getFontFamily } from "../constants/fontFamily";
 import { AppContext } from "../context/AppContext";
-import { Guest, GuestInput } from "../types/UserInterface";
-const Sound = require("react-native-sound");
+import { useHaptic } from "../hooks/useHaptic";
+import { GuestInput } from "../types/UserInterface";
 
 const AddGuestScreen = (props: any) => {
   const { setTodaysGuest } = useContext(AppContext);
@@ -40,7 +36,7 @@ const AddGuestScreen = (props: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hours, setHours] = useState<string>("00");
   const [minutes, setMinutes] = useState<string>("00");
-
+  const { triggerHapticFeedback } = useHaptic();
   const navigation = useNavigation();
   const hourOptions = [
     { hour: "00" },
@@ -60,39 +56,9 @@ const AddGuestScreen = (props: any) => {
     { minute: "50" },
     { minute: "55" },
   ];
-  const newGuestSound = new Sound(
-    "beep.mp3",
-    Sound.MAIN_BUNDLE,
-    (error: any) => {
-      if (error) {
-        console.log("Failed to load the sound", error);
-      }
-    }
-  );
 
-  const defaultOptions = {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  };
-  const RNHapticFeedback = {
-    trigger(
-      type:
-        | keyof typeof HapticFeedbackTypes
-        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
-      options: HapticOptions = {}
-    ) {
-      try {
-        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
-      } catch {
-        console.warn("RNReactNativeHapticFeedback is not available");
-      }
-    },
-  };
-  const hapticPress = () => {
-    RNHapticFeedback.trigger("soft", defaultOptions);
-  };
   const handleIconPress = () => {
-    hapticPress();
+    triggerHapticFeedback();
     navigation.goBack();
   };
   const resetForm = () => {
@@ -109,7 +75,7 @@ const AddGuestScreen = (props: any) => {
 
   const handleAddGuest = async () => {
     if (isLoading) return;
-    hapticPress();
+    triggerHapticFeedback();
 
     let isValid = true;
 
@@ -165,15 +131,14 @@ const AddGuestScreen = (props: any) => {
             }
           });
           console.log(" *-*-*-*-* ", response.data);
-          const assignToken = (guests: Guest[]) => {
-            return guests.map((guest: Guest, index: number) => ({
-              ...guest,
-              tokenIndex: index + 1,
-            }));
-          };
+          // const assignToken = (guests: Guest[]) => {
+          //   return guests.map((guest: Guest, index: number) => ({
+          //     ...guest,
+          //     tokenIndex: index + 1,
+          //   }));
+          // };
           setTodaysGuest((prev) => {
-            const dataGuest = uniqBy([...prev, response.data.guest], "_id");
-            return assignToken(dataGuest);
+            return uniqBy([...prev, response.data.guest], "_id");
           });
           resetForm();
           navigation.goBack();
@@ -196,7 +161,7 @@ const AddGuestScreen = (props: any) => {
     }
   };
   const handleNumberOfGuestsSelect = (count: number) => {
-    hapticPress();
+    triggerHapticFeedback();
 
     setNumberOfGuests(count);
     setNumberOfGuest(count.toString()); // Update numberOfGuest state
@@ -372,9 +337,6 @@ const AddGuestScreen = (props: any) => {
                       />
                     </View>
                   </View>
-                  {/* {waitingError ? (
-                    <Text style={styles.errorText}>{waitingError}</Text>
-                  ) : null} */}
                 </View>
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Number of Guests</Text>
@@ -423,7 +385,7 @@ const AddGuestScreen = (props: any) => {
                   <TouchableOpacity
                     style={styles.checkboxContainer}
                     onPress={() => {
-                      hapticPress();
+                      triggerHapticFeedback();
                       setWillingToShare(!willingToShare);
                     }}
                   >

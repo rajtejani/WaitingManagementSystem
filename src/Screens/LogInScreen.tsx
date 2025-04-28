@@ -8,14 +8,11 @@ import {
   View,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
-import NativeHapticFeedback, {
-  HapticFeedbackTypes,
-  HapticOptions,
-} from "react-native-haptic-feedback";
 import MaterialIcons from "react-native-vector-icons/Feather";
 import { loginAPI } from "../apis/auth";
 import { getFontFamily } from "../constants/fontFamily";
 import { AppContext } from "../context/AppContext";
+import { useHaptic } from "../hooks/useHaptic";
 const LogInScreen = () => {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -24,33 +21,15 @@ const LogInScreen = () => {
   const [passwordError, setPasswordError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { loginUserAction, getCurrentUser } = useContext(AppContext);
-  const defaultOptions = {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  };
-  const RNHapticFeedback = {
-    trigger(
-      type:
-        | keyof typeof HapticFeedbackTypes
-        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
-      options: HapticOptions = {}
-    ) {
-      try {
-        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
-      } catch {
-        console.warn("RNReactNativeHapticFeedback is not available");
-      }
-    },
-  };
-
+  const { loginUserAction } = useContext(AppContext);
+  const { triggerHapticFeedback } = useHaptic();
   // Function to toggle the password visibility state
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
   const handleAddGuest = async () => {
     if (isLoading) return;
-    RNHapticFeedback.trigger("soft", defaultOptions);
+    triggerHapticFeedback();
 
     let error = false;
     if (!name.trim()) {

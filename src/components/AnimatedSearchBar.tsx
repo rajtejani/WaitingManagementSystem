@@ -1,23 +1,25 @@
 import React, { useRef, useState } from "react";
 import {
   Animated,
+  Dimensions,
   Easing,
+  Keyboard,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  View,
-  Dimensions,
   TouchableWithoutFeedback,
-  Keyboard,
+  View,
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { getFontFamily } from "../constants/fontFamily";
 import { useAppContext } from "../context/AppContext";
+import { useHaptic } from "../hooks/useHaptic";
 import { UserRolesTypes } from "../utils/enums";
+import { DEVICE_WIDTH_THRESHOLD } from "../constants/device";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const deviceWidth = Dimensions.get("window").width;
-const isTablet = deviceWidth >= 640;
+const isTablet = deviceWidth >= DEVICE_WIDTH_THRESHOLD;
 const AnimatedSearchBar = ({
   onSearch,
 }: {
@@ -30,7 +32,9 @@ const AnimatedSearchBar = ({
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-60)).current;
   const { role } = useAppContext();
+  const { triggerHapticFeedback } = useHaptic();
   const openSearch = () => {
+    triggerHapticFeedback();
     setIsSearching(true);
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -49,6 +53,7 @@ const AnimatedSearchBar = ({
     });
   };
   const closeSearch = () => {
+    triggerHapticFeedback();
     Keyboard.dismiss();
     setSearchText("");
     onSearch("");

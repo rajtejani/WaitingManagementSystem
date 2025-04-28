@@ -7,12 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import NativeHapticFeedback, {
-  HapticFeedbackTypes,
-  HapticOptions,
-} from "react-native-haptic-feedback";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { getFontFamily } from "../constants/fontFamily";
+import { useHaptic } from "../hooks/useHaptic";
 const CustomDatePicker = ({
   onDateSelected,
 }: {
@@ -20,27 +17,7 @@ const CustomDatePicker = ({
 }) => {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const defaultOptions = {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  };
-  const RNHapticFeedback = {
-    trigger(
-      type:
-        | keyof typeof HapticFeedbackTypes
-        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
-      options: HapticOptions = {}
-    ) {
-      try {
-        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
-      } catch {
-        console.warn("RNReactNativeHapticFeedback is not available");
-      }
-    },
-  };
-  const hapticPress = () => {
-    RNHapticFeedback.trigger("soft", defaultOptions);
-  };
+  const { triggerHapticFeedback } = useHaptic();
   const getCurrentDate = () => {
     const now = new Date();
     now.setHours(23, 59, 59, 999); // Set to end of day for inclusive comparison
@@ -48,10 +25,12 @@ const CustomDatePicker = ({
   };
 
   const showDatePicker = () => {
-    hapticPress();
+    triggerHapticFeedback();
     setDatePickerVisibility(true);
   };
   const handleChange = (event: any, date?: Date) => {
+    triggerHapticFeedback();
+
     setDatePickerVisibility(Platform.OS === "ios");
     if (date) {
       onDateSelected(date);

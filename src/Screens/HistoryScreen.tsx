@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +12,7 @@ import { FlatList } from "react-native-gesture-handler";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getGuestHistoryAPI } from "../apis/guest";
 import CustomDatePicker from "../components/CustomDatePicker";
+import { DEVICE_WIDTH_THRESHOLD } from "../constants/device";
 import { getFontFamily } from "../constants/fontFamily";
 import { Guest } from "../types/UserInterface";
 
@@ -18,9 +20,29 @@ const HistoryScreen = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [guestList, setGuestList] = useState<Guest[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const deviceWidth = Dimensions.get("window").width;
-  const isTablet = deviceWidth >= 1000;
+  const isTablet = deviceWidth >= DEVICE_WIDTH_THRESHOLD;
+
+  const onRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      const dateString = selectedDate.toISOString().split("T")[0];
+      const response = await getGuestHistoryAPI(`${dateString}T05:30:00.000Z`);
+      const freshGuests = response.data.guests;
+      setGuestList(freshGuests);
+    } catch (error) {
+      console.error("Failed to refresh guest list:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [selectedDate]);
+
+  const refreshControl = (
+    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+  );
+
   const handleDateSelected = async (date: Date) => {
     setSelectedDate(date);
     const dateString = date.toISOString().split("T")[0];
@@ -37,14 +59,20 @@ const HistoryScreen = () => {
   };
 
   useEffect(() => {
-    try {
-      setIsLoading(true);
-      handleDateSelected(selectedDate);
-      setIsLoading(false);
-    } catch (error) {
-      setIsLoading(false);
-    }
+    const loadInitialGuests = async () => {
+      try {
+        setIsLoading(true);
+        await handleDateSelected(selectedDate);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadInitialGuests();
   }, []);
+
   return (
     <View style={styles.safeArea}>
       <View style={styles.container}>
@@ -59,9 +87,12 @@ const HistoryScreen = () => {
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>Total Plates</Text>
             <Text style={styles.statValue}>
-              {guestList.reduce((total, guest) => {
-                return (total += guest.numberOfGuests);
-              }, 0) || 0}
+              {guestList.length > 0
+                ? guestList.reduce(
+                    (total, guest) => total + guest.numberOfGuests,
+                    0
+                  )
+                : 0}
             </Text>
           </View>
         </View>
@@ -75,26 +106,63 @@ const HistoryScreen = () => {
         ) : (
           <>
             {guestList.length > 0 ? (
-              <View style={styles.guestListContainer}>
-                <Text style={styles.sectionTitle}>Guests Served</Text>
-                <FlatList
-                  data={guestList}
-                  keyExtractor={(item) => item._id}
-                  renderItem={({ item: guest }) => (
-                    <View key={guest._id} style={styles.guestItem}>
-                      <View>
-                        <Text style={styles.guestName}>{guest.name}</Text>
-                        <Text style={styles.guestPhone}>
-                          {guest.phoneNumber}
-                        </Text>
-                      </View>
-                      <Text style={styles.numberOfGuests}>
-                        Total guests: {guest.numberOfGuests}
-                      </Text>
+              <>
+                {isTablet ? (
+                  <>
+                    <View style={styles.tableHeader}>
+                      <Text style={styles.columnHeader}>Guest Name</Text>
+                      <Text style={styles.columnHeader}>Guest Phone</Text>
+                      <Text style={styles.columnHeader}>Total Guests</Text>
                     </View>
-                  )}
-                />
-              </View>
+                    <ScrollView
+                      style={styles.tableContainer}
+                      refreshControl={refreshControl}
+                    >
+                      {guestList.map((guest: Guest) => (
+                        <View style={styles.columnRow} key={guest._id}>
+                          <View style={styles.columnData}>
+                            <Text style={styles.columns}>{guest.name}</Text>
+                          </View>
+                          <View style={styles.columnData}>
+                            <Text style={styles.columns}>
+                              {guest.phoneNumber}
+                            </Text>
+                          </View>
+                          <View style={styles.columnData}>
+                            <Text style={styles.columns}>
+                              {guest.numberOfGuests}
+                            </Text>
+                          </View>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.guestListContainer}>
+                      <Text style={styles.sectionTitle}>Guests Served</Text>
+                      <FlatList
+                        data={guestList}
+                        keyExtractor={(item) => item._id}
+                        renderItem={({ item: guest }) => (
+                          <View key={guest._id} style={styles.guestItem}>
+                            <View>
+                              <Text style={styles.guestName}>{guest.name}</Text>
+                              <Text style={styles.guestPhone}>
+                                {guest.phoneNumber}
+                              </Text>
+                            </View>
+                            <Text style={styles.numberOfGuests}>
+                              Total guests: {guest.numberOfGuests}
+                            </Text>
+                          </View>
+                        )}
+                        refreshControl={refreshControl}
+                      />
+                    </View>
+                  </>
+                )}
+              </>
             ) : (
               <View style={styles.emptyStateContainer}>
                 <MaterialIcons name="event-busy" size={64} color="#DDD" />
@@ -208,6 +276,61 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 16,
     fontFamily: getFontFamily("normal"),
+  },
+
+  // Table UI > Tablet
+
+  tableHeader: {
+    flexDirection: "row",
+    position: "sticky",
+    top: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e5e5",
+    color: "#000",
+    borderTopRightRadius: 8,
+    borderTopLeftRadius: 8,
+    backgroundColor: "#fff",
+  },
+
+  columnHeader: {
+    flex: 1,
+    paddingVertical: 25,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    fontFamily: getFontFamily("medium"),
+    color: "#737373",
+    verticalAlign: "middle",
+    // borderLeftWidth: 1,
+    borderColor: "#eee",
+  },
+
+  tableContainer: {
+    flex: 1,
+    borderBottomRightRadius: 8,
+    borderBottomLeftRadius: 8,
+    boxShadow: "0px 2px 4px rgba(0,0,0,0.10)",
+    backgroundColor: "#fff",
+    marginBottom: 20,
+  },
+  columnRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+
+  columnData: {
+    flex: 1,
+    verticalAlign: "middle",
+    justifyContent: "center",
+    alignItems: "flex-start",
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    borderColor: "#eee",
+  },
+  columns: {
+    fontSize: 16,
+    fontFamily: getFontFamily("medium"),
+    textAlign: "left",
   },
 });
 

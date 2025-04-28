@@ -9,10 +9,12 @@ import {
   View,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { DEVICE_WIDTH_THRESHOLD } from "../../constants/device";
 import { getFontFamily } from "../../constants/fontFamily";
 import { useAppContext } from "../../context/AppContext";
 import { Guest } from "../../types/UserInterface";
 import { StatusEnum } from "../../utils/enums";
+import { getCompleteStatusColor, getStatusIcon } from "../../utils/statusColor";
 interface CompletedListProps {
   searchQuery: string;
 }
@@ -20,7 +22,7 @@ const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
   const { todaysGuest } = useAppContext();
   // Get the device width
   const deviceWidth = Dimensions.get("window").width;
-  const isTablet = deviceWidth >= 1000;
+  const isTablet = deviceWidth >= DEVICE_WIDTH_THRESHOLD;
 
   const sortedGuests = useMemo(() => {
     let guestList = todaysGuest;
@@ -44,30 +46,8 @@ const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
     )
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const getStatusColor = (status: StatusEnum) => {
-    switch (status) {
-      case StatusEnum.Seated:
-        return "#4CAF50";
-      case StatusEnum.Cancelled:
-        return "#F44336";
-      default:
-        return "#999";
-    }
-  };
-
-  const getStatusIcon = (status: StatusEnum) => {
-    switch (status) {
-      case StatusEnum.Seated:
-        return "check-circle";
-      case StatusEnum.Cancelled:
-        return "cancel";
-      default:
-        return "info";
-    }
-  };
-
   const renderItem = ({ item }: { item: Guest }) => {
-    const statusColor = getStatusColor(item.status);
+    const statusColor = getCompleteStatusColor(item.status);
     const statusIcon = getStatusIcon(item.status);
     return (
       <>
@@ -163,19 +143,21 @@ const CompletedList: React.FC<CompletedListProps> = ({ searchQuery }) => {
                         style={[
                           styles.statusContainer,
                           {
-                            backgroundColor: `${getStatusColor(item.status)}20`,
+                            backgroundColor: `${getCompleteStatusColor(
+                              item.status
+                            )}20`,
                           },
                         ]}
                       >
                         <MaterialIcons
                           name={getStatusIcon(item.status)}
                           size={14}
-                          color={getStatusColor(item.status)}
+                          color={getCompleteStatusColor(item.status)}
                         />
                         <Text
                           style={[
                             styles.statusText,
-                            { color: getStatusColor(item.status) },
+                            { color: getCompleteStatusColor(item.status) },
                           ]}
                         >
                           {item.status.charAt(0).toUpperCase() +

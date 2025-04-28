@@ -9,10 +9,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import NativeHapticFeedback, {
-  HapticFeedbackTypes,
-  HapticOptions,
-} from "react-native-haptic-feedback";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getTodaysGuestAPI } from "../apis/guest";
@@ -22,17 +18,18 @@ import CompletedList from "../components/guestItem/CompletedList";
 import WaitingList from "../components/guestItem/WaitingList";
 import { getFontFamily } from "../constants/fontFamily";
 import { useAppContext } from "../context/AppContext";
+import { useHaptic } from "../hooks/useHaptic";
 import { StatusEnum, UserRolesTypes } from "../utils/enums";
 
 const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState<"upcoming" | "completed">(
     "upcoming"
   );
-  const navigation = useNavigation();
-  const { todaysGuest, role, setTodaysGuest } = useAppContext();
-
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { todaysGuest, role, setTodaysGuest } = useAppContext();
+  const { triggerHapticFeedback } = useHaptic();
+  const navigation = useNavigation();
 
   const upcomingGuestsCount = todaysGuest?.filter(
     (guest) => ![StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
@@ -40,29 +37,8 @@ const HomeScreen = () => {
   const completedGuestsCount = todaysGuest?.filter((guest) =>
     [StatusEnum.Cancelled, StatusEnum.Seated].includes(guest.status)
   ).length;
-  const defaultOptions = {
-    enableVibrateFallback: true,
-    ignoreAndroidSystemSettings: false,
-  };
-  const RNHapticFeedback = {
-    trigger(
-      type:
-        | keyof typeof HapticFeedbackTypes
-        | HapticFeedbackTypes = HapticFeedbackTypes.selection,
-      options: HapticOptions = {}
-    ) {
-      try {
-        NativeHapticFeedback.trigger(type, { ...defaultOptions, ...options });
-      } catch {
-        console.warn("RNReactNativeHapticFeedback is not available");
-      }
-    },
-  };
-  const hapticPress = () => {
-    RNHapticFeedback.trigger("soft", defaultOptions);
-  };
   const handleIconPress = () => {
-    hapticPress();
+    triggerHapticFeedback();
     navigation.navigate("Guest");
   };
   const onRefresh = useCallback(async () => {
@@ -117,7 +93,7 @@ const HomeScreen = () => {
                   ]}
                   onPress={() => {
                     setActiveTab("upcoming");
-                    hapticPress();
+                    triggerHapticFeedback();
                   }}
                 >
                   <Text
@@ -138,7 +114,7 @@ const HomeScreen = () => {
                     activeTab === "completed" && styles.activeTab,
                   ]}
                   onPress={() => {
-                    hapticPress();
+                    triggerHapticFeedback();
                     setActiveTab("completed");
                   }}
                 >
