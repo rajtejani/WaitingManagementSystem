@@ -111,6 +111,7 @@ const AddGuestScreen = (props: any) => {
     }
 
     if (isValid) {
+      setIsLoading(true);
       // Call the API to add the guest
       try {
         const guestData: GuestInput = {
@@ -145,6 +146,8 @@ const AddGuestScreen = (props: any) => {
         }
       } catch (error: any) {
         console.log("Error adding guest", error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
